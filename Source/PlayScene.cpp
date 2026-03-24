@@ -4,6 +4,7 @@ PlayScene::PlayScene()
 {
     camera = new Camera();  //cameraの初期化 
     player = new Player();  //playerの初期化
+    object = new Object();  //objectの初期化
 }
 
 PlayScene::~PlayScene()
@@ -22,6 +23,7 @@ void PlayScene::Update()
    // 各自Update
    camera->Update();
    player->Update();
+   object->Update();
 }
 
 void PlayScene::Draw()
@@ -54,4 +56,5 @@ void PlayScene::Draw()
    DrawString(100, 500, "Push [C]Key To Clear", GetColor(255, 255, 255));
 
    player->Draw();  // プレイヤーのモデルを表示
+   object->Draw();  // ブロック系統のモデルを表示
 }

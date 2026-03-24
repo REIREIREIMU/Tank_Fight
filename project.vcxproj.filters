@@ -62,6 +62,9 @@
     <ClCompile Include="Source\Camera.cpp">
       <Filter>SceneManager\PlayScene</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Object.cpp">
+      <Filter>SceneManager\PlayScene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Screen.h" />
@@ -133,6 +136,9 @@
       <Filter>SceneManager\PlayScene</Filter>
     </ClInclude>
     <ClInclude Include="Source\Player.h">
+      <Filter>SceneManager\PlayScene</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Object.h">
       <Filter>SceneManager\PlayScene</Filter>
     </ClInclude>
   </ItemGroup>
