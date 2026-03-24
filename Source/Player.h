@@ -9,21 +9,25 @@ public:
 	void Update() override;
 	void Draw() override;
 
-	// Y軸に回転する為の「ラジアン」
-	float  GetAngleY()  const { return pos_y; }
-
 private:
-	int		m_handle;	//モデルのハンドル
-	float	pos_x, 
-			pos_y,
-			pos_z;		//プレイヤー用座標（x,y,z）
+	int	Body_m_handle,  // 車体のハンドル
+		Head_m_handle;  // 砲塔のハンドル
 
-	//プレイヤー用ベクター
-	VECTOR Position;	// 移動
-	VECTOR Rotation;	// 回転
+	float pos_x, 
+		  pos_y1,	// 車体用 Y座標
+		  pos_y2,	// 砲塔用 Y座標
+		  pos_z;	// プレイヤー用座標（x,y,z）
 
-	//向いている方向に前進後進する為のベクトル
+	// プレイヤー用ベクター
+	VECTOR Position;		// 移動
+	VECTOR Body_Rotation,	// 回転(車体)
+		   Head_Rotation;	// 回転(砲塔)
+
+	// 向いている方向に前進後進する為のベクター
 	VECTOR forward;
+
+	// マウスポインター用ベクター
+	VECTOR GetMouseWorldPos();
 
 	/*enum Dir {
 		Front = 0,
