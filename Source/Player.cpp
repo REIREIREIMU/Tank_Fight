@@ -2,27 +2,32 @@
 
 static const float Speed = 1.5f;
 
-Player::Player()
+Player::Player() :m_handle(-1), 
+	pos_x(0.0f), pos_y(0.0f), pos_z(0.0f)
 {
-	hImage = LoadGraph("data/chara.png");
-	positionX = 100;
-	positionY = 100;
-	direction = Dir::Front;
-	counter = 0;
+	// 3Dモデルの読み込み
+	m_handle = MV1LoadModel("Assets/Player_Tank.mv1");
+
+	// 位置管理
+	Position = VGet( pos_x, pos_y, pos_z);
+
+	// モデルの位置を設定する
+	MV1SetPosition ( m_handle, Position);
+
+	/*direction = Dir::Front;
+	counter = 0;*/
 	SetDrawOrder(-1);
 }
 
 Player::~Player()
 {
-	if (hImage > 0) {
-		DeleteGraph(hImage);
-		hImage = -1;
-	}
+	//モデルの削除
+	MV1DeleteModel(m_handle);
 }
 
 void Player::Update()
 {
-	if (CheckHitKey(KEY_INPUT_W)) {
+	/*if (CheckHitKey(KEY_INPUT_W)) {
 		positionY -= Speed;
 		direction = Dir::Back;
 	}
@@ -38,12 +43,11 @@ void Player::Update()
 		positionX -= Speed;
 		direction = Dir::Left;
 	}
-	counter++;
+	counter++;*/
 }
 
 void Player::Draw()
 {
-	int col = (counter / 16) % 4 + 4;
-	int row = (int)direction;
-	DrawRectGraph((int)positionX, (int)positionY, col*64, row*64, 64, 64, hImage, TRUE);
+	//モデルの表示
+	MV1DrawModel(m_handle);
 }
