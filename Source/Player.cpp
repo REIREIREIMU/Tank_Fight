@@ -1,6 +1,7 @@
 #include "Player.h"
 
-static const float Speed = 1.5f;
+static const float Speed = 0.05f;
+static const float Angle = 0.02f;
 
 Player::Player() :m_handle(-1), 
 	pos_x(0.0f), pos_y(0.0f), pos_z(0.0f)
@@ -9,14 +10,14 @@ Player::Player() :m_handle(-1),
 	m_handle = MV1LoadModel("Assets/Player_Tank.mv1");
 
 	// 位置管理
-	Position = VGet( pos_x, pos_y, pos_z);
+	Position  = VGet( pos_x,  0.0f, pos_z);
+	Rotation  = VGet(  0.0f, pos_y,  0.0f);
+	forward.x = sinf(pos_y);
+	forward.z = cosf(pos_y);
 
 	// モデルの位置を設定する
-	MV1SetPosition ( m_handle, Position);
-
-	/*direction = Dir::Front;
-	counter = 0;*/
-	SetDrawOrder(-1);
+	MV1SetPosition	 ( m_handle, Position); // 位置座標
+	MV1SetRotationXYZ( m_handle, Rotation); // 回転座標
 }
 
 Player::~Player()
@@ -27,23 +28,34 @@ Player::~Player()
 
 void Player::Update()
 {
-	/*if (CheckHitKey(KEY_INPUT_W)) {
-		positionY -= Speed;
-		direction = Dir::Back;
+	// 回転操作
+	if (CheckHitKey(KEY_INPUT_A)){ // 左回転
+		pos_y -= Angle;
 	}
-	if (CheckHitKey(KEY_INPUT_S)) {
-		positionY += Speed;
-		direction = Dir::Front;
+	if (CheckHitKey(KEY_INPUT_D)){ // 右回転
+		pos_y += Angle;
 	}
-	if (CheckHitKey(KEY_INPUT_D)) {
-		positionX += Speed;
-		direction = Dir::Right;
+
+	// 移動操作
+	if (CheckHitKey(KEY_INPUT_W)) { // 前進
+		pos_x -= forward.x * Speed;
+		pos_z -= forward.z * Speed;
 	}
-	if (CheckHitKey(KEY_INPUT_A)) {
-		positionX -= Speed;
-		direction = Dir::Left;
+	if (CheckHitKey(KEY_INPUT_S)) { // 後進
+		pos_x += forward.x * Speed;
+		pos_z += forward.z * Speed;
 	}
-	counter++;*/
+
+	// 位置管理
+	Position  = VGet(pos_x, 0.0f, pos_z);
+	Rotation  = VGet(0.0f, pos_y, 0.0f);
+	forward.x = sinf(pos_y);
+	forward.z = cosf(pos_y);
+
+	// モデルの位置を設定する
+	MV1SetPosition   (m_handle, Position); // 位置座標
+	MV1SetRotationXYZ(m_handle, Rotation); // 回転座標
+
 }
 
 void Player::Draw()
