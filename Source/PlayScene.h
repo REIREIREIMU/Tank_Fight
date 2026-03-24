@@ -14,4 +14,13 @@ public:
 private:
 	Camera* camera;		// Cameraのポインタを作成
 	Player* player;		// Playerのポインタを作成
+
+	// ディバック用グリット線
+	const int   Grid_Half =   50;	// グリット線を表示する範囲
+	const float Grid_Size = 1.0f;	// グリット線のサイズ
+	// 通常グリッド線の色
+	int GridColor  = GetColor(80, 80, 80);
+	// 軸の色
+	int xAxisColor = GetColor(200, 80, 80); // X軸：赤
+	int zAxisColor = GetColor(80, 80, 200); // Z軸：青
 };
