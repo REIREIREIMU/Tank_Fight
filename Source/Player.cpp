@@ -4,7 +4,7 @@ static const float Speed = 0.05f;
 static const float Angle = 0.02f;
 
 Player::Player() :Body_m_handle(-1), Head_m_handle(-1),
-	pos_x(0.0f), pos_y1(0.0f), pos_y2(0.0f), pos_z(0.0f)
+	pos_x(0.0f), pos_y1(DX_PI_F), pos_y2(0.0f), pos_z(0.0f)
 {
 	// 3Dƒ‚ƒfƒ‹‚Ì“Ç‚İ‚İ
 	Body_m_handle = MV1LoadModel("Assets/Player_Tank_Body.mv1");
