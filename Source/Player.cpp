@@ -2,8 +2,9 @@
 #include "Object.h"
 #include <cmath>
 
-static const float Speed = 0.05f;
-static const float Angle = 0.02f;
+constexpr float    Player_Half = 0.4f;	// Player用（箱型）
+static const float Speed  = 0.035f;		// 移動速度
+static const float Angle  = 0.020f;		// 車体の移転速度
 
 Player::Player(Object* obj) :
 	Body_m_handle(-1), Head_m_handle(-1),
@@ -50,8 +51,6 @@ void Player::Update()
 
 	// マウスポインターを追従して回転
 	pos_y2 = atan2f(dir.x, dir.z) + DX_PI_F;
-	// ↓これがないとマウスポインターと真逆の方を向く
-	//pos_y2 += DX_PI_F;
 
 	// 回転操作
 	if (CheckHitKey(KEY_INPUT_A)){ // 左回転
@@ -100,6 +99,28 @@ void Player::Update()
 
 void Player::Draw()
 {
+	// 当たり判定の可視化（デバッグ用）
+	{
+		//VECTOR minPos = VGet(
+		//	pos_x - Player_Half,
+		//	0.0f,
+		//	pos_z - Player_Half
+		//);
+		//VECTOR maxPos = VGet(
+		//	pos_x + Player_Half,
+		//	1.0f,
+		//	pos_z + Player_Half
+		//);
+		//// 赤いワイヤーフレームの箱
+		//DrawCube3D(
+		//	minPos,
+		//	maxPos,
+		//	GetColor(255, 0, 0),
+		//	GetColor(255, 0, 0),
+		//	FALSE
+		//);
+	}
+
 	// モデルの表示
 	MV1DrawModel(Body_m_handle);
 	MV1DrawModel(Head_m_handle);

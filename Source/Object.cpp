@@ -61,12 +61,33 @@ void Object::Draw()
 				// mapData[1]は「壁」
 				if (mapData[z][x] != 1) continue;
 
-				pos_x = (x - Map_pos.x / 2) * Ground_Size;
-				pos_z = -(z - Map_pos.z / 2.5) * Ground_Size;
+				pos_x = (x + 0.5f - Map_pos.x * 0.5f) * Ground_Size;
+				pos_z = -(z + 0.5f - Map_pos.z * 0.5f) * Ground_Size;
 
 				// ブロックモデルの表示
 				MV1SetPosition(Block_m_handle, VGet(pos_x, pos_y, pos_z));
 				MV1DrawModel(Block_m_handle);
+
+				// デバッグ用 当たり判定
+				{
+					//VECTOR minPos = VGet(
+					//	pos_x - Block_Half,
+					//	0.0f,
+					//	pos_z - Block_Half
+					//);
+					//VECTOR maxPos = VGet(
+					//	pos_x + Block_Half,
+					//	1.0f,
+					//	pos_z + Block_Half
+					//);
+					//DrawCube3D(
+					//	minPos,
+					//	maxPos,
+					//	GetColor(0, 255, 0),  // 緑
+					//	GetColor(0, 255, 0),
+					//	FALSE
+					//);
+				}
 			}
 		}
 	}
@@ -79,8 +100,8 @@ bool Object::CheckHit(float px, float pz)
 
 			if (mapData[z][x] != 1) continue;
 
-			float bx = (x - Map_pos.x / 2) * Ground_Size;
-			float bz = -(z - Map_pos.z / 2.5f) * Ground_Size;
+			float bx =  (x + 0.5f - Map_pos.x * 0.5f) * Ground_Size;
+			float bz = -(z + 0.5f - Map_pos.z * 0.5f) * Ground_Size;
 
 			if (CheckAABB(
 				px, pz, Player_Half,
