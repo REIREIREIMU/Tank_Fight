@@ -1,0 +1,274 @@
+//Player.h
+#pragma once
+#include "../Library/GameObject.h"
+
+class Player : public GameObject {
+public:
+	Player();
+	~Player();
+
+	void Update() override;
+	void Draw() override;
+
+private:
+	int	Body_m_handle,  // 車体のハンドル
+		Head_m_handle;  // 砲塔のハンドル
+
+	float pos_x, 
+		  pos_y1,	// 車体用 Y座標
+		  pos_y2,	// 砲塔用 Y座標
+		  pos_z;	// プレイヤー用座標（x,y,z）
+
+	// プレイヤー用ベクター
+	VECTOR Position;		// 移動
+	VECTOR Body_Rotation,	// 回転(車体)
+		   Head_Rotation;	// 回転(砲塔)
+
+	// 向いている方向に前進後進する為のベクター
+	VECTOR forward;
+
+	// マウスポインター用ベクター
+	VECTOR GetMouseWorldPos();
+
+	/*enum Dir {
+		Front = 0,
+		Left,
+		Back,
+		Right,
+	};
+	Dir direction;
+	int counter;*/
+};
+
+
+//Player.cpp
+#include "Player.h"
+
+static const float Speed = 0.05f;
+static const float Angle = 0.02f;
+
+Player::Player() :Body_m_handle(-1), Head_m_handle(-1),
+	pos_x(0.0f), pos_y1(DX_PI_F), pos_y2(0.0f), pos_z(0.0f)
+{
+	// 3Dモデルの読み込み
+	Body_m_handle = MV1LoadModel("Assets/Player_Tank_Body.mv1");
+	Head_m_handle = MV1LoadModel("Assets/Player_Tank_Head.mv1");
+
+	// 位置管理
+	Position      = VGet( pos_x,  0.0f, pos_z);
+	Body_Rotation = VGet( 0.0f, pos_y1,  0.0f); // 車体用回転
+	Head_Rotation = VGet( 0.0f, pos_y2,  0.0f); // 砲塔用回転
+	forward.x	  = sinf(pos_y1);
+	forward.z	  = cosf(pos_y1);
+
+	// モデルの位置を設定する(車体)
+	MV1SetPosition	 ( Body_m_handle, Position);	  // 位置座標
+	MV1SetRotationXYZ( Body_m_handle, Body_Rotation); // 回転座標
+
+	// モデルの位置を設定する(砲塔)
+	MV1SetPosition   ( Head_m_handle, Position);	  // 位置座標
+	MV1SetRotationXYZ( Head_m_handle, Head_Rotation); // 回転座標
+}
+
+Player::~Player()
+{
+	// モデルの削除
+	MV1DeleteModel(Body_m_handle);
+	MV1DeleteModel(Head_m_handle);
+}
+
+void Player::Update()
+{
+	VECTOR mousePos = GetMouseWorldPos();
+
+	VECTOR dir;
+	dir.x = mousePos.x - pos_x;
+	dir.z = mousePos.z - pos_z;
+
+	pos_y2 = atan2f(dir.x, dir.z);
+	// ↓これがないとマウスポインターと真逆の方を向く
+	pos_y2 += DX_PI_F;
+
+	// 回転操作
+	if (CheckHitKey(KEY_INPUT_A)){ // 左回転
+		pos_y1 -= Angle;
+	}
+	if (CheckHitKey(KEY_INPUT_D)){ // 右回転
+		pos_y1 += Angle;
+	}
+
+	// 移動操作
+	if (CheckHitKey(KEY_INPUT_W)) { // 前進
+		pos_x -= forward.x * Speed;
+		pos_z -= forward.z * Speed;
+	}
+	if (CheckHitKey(KEY_INPUT_S)) { // 後進
+		pos_x += forward.x * Speed;
+		pos_z += forward.z * Speed;
+	}
+
+	// 位置管理
+	Position	  = VGet(pos_x, 0.0f, pos_z);
+	Body_Rotation = VGet(0.0f, pos_y1, 0.0f); // 車体用回転
+	Head_Rotation = VGet(0.0f, pos_y2, 0.0f); // 砲塔用回転
+	forward.x     = sinf(pos_y1);
+	forward.z     = cosf(pos_y1);
+
+	// モデルの位置を設定する(車体)
+	MV1SetPosition(Body_m_handle, Position);		 // 位置座標
+	MV1SetRotationXYZ(Body_m_handle, Body_Rotation); // 回転座標
+
+	// モデルの位置を設定する(砲塔)
+	MV1SetPosition(Head_m_handle, Position);		 // 位置座標
+	MV1SetRotationXYZ(Head_m_handle, Head_Rotation); // 回転座標
+}
+
+void Player::Draw()
+{
+	// モデルの表示
+	MV1DrawModel(Body_m_handle);
+	MV1DrawModel(Head_m_handle);
+}
+
+VECTOR Player::GetMouseWorldPos()
+{
+	// マウスポインターの座標
+	int prevMouseX, prevMouseY;
+	GetMousePoint(&prevMouseX, &prevMouseY);
+
+	// 画面上の2点（ニア・ファー）
+	VECTOR nearPos = ConvScreenPosToWorldPos(VGet((float)prevMouseX, (float)prevMouseY, 0.0f));
+	VECTOR farPos  = ConvScreenPosToWorldPos(VGet((float)prevMouseX, (float)prevMouseY, 1.0f));
+
+	// 地面（Y=0）との交点を求める
+	float t = -nearPos.y / (farPos.y - nearPos.y);
+
+	VECTOR hitPos;
+	hitPos.x = nearPos.x + (farPos.x - nearPos.x) * t;
+	hitPos.z = nearPos.z + (farPos.z - nearPos.z) * t;
+
+	return hitPos;
+}
+
+
+//Object.h
+#pragma once
+#include "../Library/GameObject.h"
+#include <fstream>
+#include <sstream>
+#include <vector>
+
+class Object : public GameObject {
+public:
+	Object();
+	~Object();
+
+	void Update() override;
+	void Draw() override;
+
+private:
+	int	Ground_m_handle; // 地面のハンドル
+	int	Block_m_handle;	 // ブロックのハンドル
+
+	std::vector<std::vector<int>> mapData;
+
+	int   Half_Size;     // 地面の表示する範囲
+	float Ground_Size;   // 地面の１マスのサイズ 
+
+	// オブジェクトの「Position」関連
+	VECTOR Map_pos;
+	float pos_x, pos_y,	pos_z;	
+
+	// CSV対応可
+	void LoadCSV(const char* filename);
+};
+
+
+//Object.cpp
+#include "Object.h"
+
+Object::Object() :
+	Block_m_handle(-1), pos_x(0.0f), pos_y(0.0f), pos_z(0.0f),
+	Ground_m_handle(-1), Half_Size(50), Ground_Size(1.0f)
+{
+	// 3Dモデルの読み込み
+	Block_m_handle  = MV1LoadModel("Assets/Block.mv1");
+	Ground_m_handle = MV1LoadModel("Assets/Ground.mv1");
+
+	// 「CSV」読み込み
+	LoadCSV("Assets/Stage/Stage_00.csv");
+}
+
+Object::~Object()
+{
+	// モデルの削除
+	MV1DeleteModel(Block_m_handle);
+	MV1DeleteModel(Ground_m_handle);
+}
+
+void Object::Update()
+{
+}
+
+void Object::Draw()
+{
+	// 地面（ここは「CSV」対応してない）
+	{
+		// 地面を指定範囲内一面に埋めて表示
+		for (int x = -Half_Size; x <= Half_Size; x++)
+		{
+			for (int z = -Half_Size; z <= Half_Size; z++) {
+
+				pos_x = x * Ground_Size;
+				pos_z = z * Ground_Size;
+
+				MV1SetPosition(Ground_m_handle, VGet(pos_x, pos_y, pos_z));
+				MV1DrawModel(Ground_m_handle);
+			}
+		}
+	}
+
+	// 壁（CSV配置）
+	{
+		for (int x = 0; x < Map_pos.x; x++){
+			for (int z = 0; z < Map_pos.z; z++) {
+				// mapData[1]は「壁」
+				if (mapData[z][x] == 1){
+					pos_x = (x - Map_pos.x / 2) * Ground_Size;
+					pos_z = -(z - Map_pos.z / 2.5) * Ground_Size;
+
+					// ブロックモデルの表示
+					MV1SetPosition(Block_m_handle, VGet(pos_x, pos_y, pos_z));
+					MV1DrawModel(Block_m_handle);
+				}
+			}
+		}
+	}
+}
+
+void Object::LoadCSV(const char* filename)
+{
+	std::ifstream file(filename);
+	std::string line;
+
+	mapData.clear();
+
+	while (std::getline(file, line))
+	{
+		std::stringstream ss(line);
+
+		std::string value;
+		std::vector<int> row;
+
+		while (std::getline(ss, value, ','))
+		{
+			row.push_back(std::stoi(value));
+		}
+
+		mapData.push_back(row);
+	}
+
+	Map_pos.x = (int)mapData[0].size();
+	Map_pos.z = (int)mapData.size();
+}
+

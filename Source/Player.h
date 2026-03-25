@@ -1,9 +1,11 @@
 #pragma once
 #include "../Library/GameObject.h"
 
+class Object;
+
 class Player : public GameObject {
 public:
-	Player();
+	Player(Object* object);
 	~Player();
 
 	void Update() override;
@@ -18,6 +20,9 @@ private:
 		  pos_y2,	// 砲塔用 Y座標
 		  pos_z;	// プレイヤー用座標（x,y,z）
 
+	// プレイヤー移動量
+	float move_x, move_z;
+
 	// プレイヤー用ベクター
 	VECTOR Position;		// 移動
 	VECTOR Body_Rotation,	// 回転(車体)
@@ -25,6 +30,9 @@ private:
 
 	// 向いている方向に前進後進する為のベクター
 	VECTOR forward;
+
+	// 当たり判定用（壁）
+	Object* object;
 
 	// マウスポインター用ベクター
 	VECTOR GetMouseWorldPos();

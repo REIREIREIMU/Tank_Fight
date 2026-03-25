@@ -12,6 +12,8 @@ public:
 	void Update() override;
 	void Draw() override;
 
+	bool CheckHit(float px, float pz);
+
 private:
 	int	Ground_m_handle; // 地面のハンドル
 	int	Block_m_handle;	 // ブロックのハンドル

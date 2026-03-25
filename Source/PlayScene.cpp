@@ -2,9 +2,9 @@
 
 PlayScene::PlayScene()
 {
-    camera = new Camera();  //camera‚Ì‰Šú‰» 
-    player = new Player();  //player‚Ì‰Šú‰»
-    object = new Object();  //object‚Ì‰Šú‰»
+    camera = new Camera();        //camera‚Ì‰Šú‰»
+    object = new Object();        //object‚Ì‰Šú‰»
+    player = new Player(object);  //player‚Ì‰Šú‰»
 }
 
 PlayScene::~PlayScene()
