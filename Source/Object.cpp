@@ -8,8 +8,8 @@ Object::Object() :
 	Block_m_handle  = MV1LoadModel("Assets/Block.mv1");
 	Ground_m_handle = MV1LoadModel("Assets/Ground.mv1");
 
-	// モデルの位置を設定する
-	MV1SetPosition(Block_m_handle,  VGet(pos_x, pos_y, pos_z));	 // 位置座標
+	// 「CSV」読み込み
+	LoadCSV("Assets/Stage/Stage_00.csv");
 }
 
 Object::~Object()
@@ -25,20 +25,62 @@ void Object::Update()
 
 void Object::Draw()
 {
-	// 地面を指定範囲内一面に埋めて表示
-    for (int x = -Half_Size; x <= Half_Size; x++)
-    {
-        for (int z = -Half_Size; z <= Half_Size; z++){
-        
-			pos_x = x * Ground_Size;
-			pos_z = z * Ground_Size;
+	// 地面（ここは「CSV」対応してない）
+	{
+		// 地面を指定範囲内一面に埋めて表示
+		for (int x = -Half_Size; x <= Half_Size; x++)
+		{
+			for (int z = -Half_Size; z <= Half_Size; z++) {
 
-			MV1SetPosition(Ground_m_handle, VGet(pos_x, pos_y, pos_z));	  // 位置座標
-			MV1DrawModel(Ground_m_handle);
-        }
-    }
+				pos_x = x * Ground_Size;
+				pos_z = z * Ground_Size;
 
-	// ブロックモデルの表示
-	MV1DrawModel(Block_m_handle);
-	
+				MV1SetPosition(Ground_m_handle, VGet(pos_x, pos_y, pos_z));
+				MV1DrawModel(Ground_m_handle);
+			}
+		}
+	}
+
+	// 壁（CSV配置）
+	{
+		for (int x = 0; x < Map_pos.x; x++){
+			for (int z = 0; z < Map_pos.z; z++) {
+				// mapData[1]は「壁」
+				if (mapData[z][x] == 1){
+					pos_x = (x - Map_pos.x / 2) * Ground_Size;
+					pos_z = -(z - Map_pos.z / 2.5) * Ground_Size;
+
+					// ブロックモデルの表示
+					MV1SetPosition(Block_m_handle, VGet(pos_x, pos_y, pos_z));
+					MV1DrawModel(Block_m_handle);
+				}
+			}
+		}
+	}
+}
+
+void Object::LoadCSV(const char* filename)
+{
+	std::ifstream file(filename);
+	std::string line;
+
+	mapData.clear();
+
+	while (std::getline(file, line))
+	{
+		std::stringstream ss(line);
+
+		std::string value;
+		std::vector<int> row;
+
+		while (std::getline(ss, value, ','))
+		{
+			row.push_back(std::stoi(value));
+		}
+
+		mapData.push_back(row);
+	}
+
+	Map_pos.x = (int)mapData[0].size();
+	Map_pos.z = (int)mapData.size();
 }
