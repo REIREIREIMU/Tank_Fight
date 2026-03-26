@@ -23,6 +23,6 @@ private:
 	// 通常グリッド線の色
 	int GridColor  = GetColor(80, 80, 80);
 	// 軸の色
-	int xAxisColor = GetColor(200, 80, 80); // X軸：赤
-	int zAxisColor = GetColor(80, 80, 200); // Z軸：青
+	int xAxisColor = GetColor(200, 80, 80);  // X軸：赤
+	int zAxisColor = GetColor( 80, 80, 200); // Z軸：青
 };

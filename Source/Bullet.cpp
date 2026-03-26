@@ -50,8 +50,8 @@ void Bullet::Draw()
 
     // デバッグ用表示
     {
-        printfDx("Bullet Draw Pos:(%.2f, %.2f, %.2f)\n",
-            m_pos.x, m_pos.y, m_pos.z);
+      /*  printfDx("Bullet Draw Pos:(%.2f, %.2f, %.2f)\n",
+            m_pos.x, m_pos.y, m_pos.z);*/
     }
 
 }
