@@ -10,10 +10,11 @@ Bullet::Bullet
     // 3Dモデルの読み込み
     Bullet_m_handle = MV1LoadModel("Assets/Bullet.mv1");
 
-    m_pos     = startPos;
-    m_vel     = VScale(VNorm(dir), 0.025f);
-    m_reflect = 2;
-    m_alive   = true;
+    m_pos          = startPos;
+    m_vel          = VScale(VNorm(dir), 0.025f);
+    m_reflect      = 2;
+    m_alive        = true;
+    m_trailGrowing = true;
 
     // 最初の位置を記録
     m_trail.push_back(m_pos);
@@ -30,38 +31,49 @@ Bullet::~Bullet()
 
 void Bullet::Update()
 {
-    if (!m_alive) return;
+    if (m_alive){
+        // 移動
+        m_pos = VAdd(m_pos, m_vel);
 
-    // 移動
-    m_pos = VAdd(m_pos, m_vel);
+        // 弾が生きている間は軌道生成
+        if (m_trailGrowing){
+            // 軌道を保存
+            m_trail.push_back(m_pos);
 
-    // 軌道を保存
-    m_trail.push_back(m_pos);
+            // 軌道線の後ろが徐々に消える
+            if ((int)m_trail.size() > MaxTrailPoints){
+                m_trail.erase(m_trail.begin());
+            }
+        }
 
-    // 軌道線の後ろが徐々に消える
-    if ((int)m_trail.size() > MaxTrailPoints)
-    {
-        m_trail.erase(m_trail.begin());
+        CheckWallCollision();
+
+        // 向き計算
+        float yaw = atan2f(-m_vel.x, -m_vel.z);
+        VECTOR rot = VGet(0.0f, yaw, 0.0f);
+
+        // 弾の位置更新
+        MV1SetPosition(Bullet_m_handle, m_pos);
+        MV1SetRotationXYZ(Bullet_m_handle, rot);
     }
+    else{
+        // 軌道を生成はしない
+        m_trailGrowing = false;
 
-    CheckWallCollision();
-
-    // 向き計算
-    float yaw  = atan2f(-m_vel.x, -m_vel.z);
-    VECTOR rot = VGet(0.0f, yaw, 0.0f);
-
-    // 弾の位置更新
-    MV1SetPosition(Bullet_m_handle, m_pos);
-    MV1SetRotationXYZ(Bullet_m_handle, rot);
-
+        // 軌道線の後ろが徐々に消える
+        if (!m_trail.empty()){
+            m_trail.erase(m_trail.begin());
+        }
+    }
 }
 
 void Bullet::Draw()
 {
-    if (!m_alive) return;
-
-    // モデルの表示
-    MV1DrawModel(Bullet_m_handle);
+    if (!m_alive)
+    {  
+        // モデルの表示
+        MV1DrawModel(Bullet_m_handle);
+    }
 
     // 軌道線の表示
     for (size_t i = 1; i < m_trail.size(); i++)
