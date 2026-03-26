@@ -1,5 +1,6 @@
 #pragma once
 #include "../Library/GameObject.h"
+#include <vector>
 
 class Object;
 
@@ -27,6 +28,12 @@ private:
 
     // 反射処理
     void Reflect(const VECTOR& normal);
+
+    // 弾の軌道履歴
+    std::vector<VECTOR> m_trail;
+
+    // 軌道線の残る長さ
+    static constexpr int MaxTrailPoints = 60;
 
     // 当たり判定用（壁）
     Object* object = nullptr;

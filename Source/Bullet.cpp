@@ -14,7 +14,10 @@ Bullet::Bullet
     m_vel     = VScale(VNorm(dir), 0.025f);
     m_reflect = 2;
     m_alive   = true;
-   
+
+    // 最初の位置を記録
+    m_trail.push_back(m_pos);
+
     // 初期位置設定
     MV1SetPosition(Bullet_m_handle, m_pos);
 
@@ -31,6 +34,16 @@ void Bullet::Update()
 
     // 移動
     m_pos = VAdd(m_pos, m_vel);
+
+    // 軌道を保存
+    m_trail.push_back(m_pos);
+
+    // 軌道線の後ろが徐々に消える
+    if ((int)m_trail.size() > MaxTrailPoints)
+    {
+        m_trail.erase(m_trail.begin());
+    }
+
     CheckWallCollision();
 
     // 向き計算
@@ -49,6 +62,16 @@ void Bullet::Draw()
 
     // モデルの表示
     MV1DrawModel(Bullet_m_handle);
+
+    // 軌道線の表示
+    for (size_t i = 1; i < m_trail.size(); i++)
+    {
+        DrawLine3D(
+            m_trail[i - 1],
+            m_trail[i],
+            GetColor(255, 255, 255)
+        );
+    }
 
     // デバッグ用表示
     {
@@ -112,6 +135,6 @@ void Bullet::Reflect(const VECTOR& normal)
 
     // めり込み防止
     m_pos = VAdd(m_pos, VScale(m_vel, 0.1f));
-    
+
     m_reflect--;
 }
