@@ -2,7 +2,7 @@
 #include "Object.h"
 #include <cmath>
 
-constexpr float    Player_Half = 0.4f;	// Player用（箱型）
+constexpr float    Player_Half  = 0.4f;	// Player用（箱型）
 static const float Speed  = 0.035f;		// 移動速度
 static const float Angle  = 0.020f;		// 車体の移転速度
 
@@ -152,15 +152,20 @@ void Player::Draw()
 void Player::Shoot()
 {
 	VECTOR shotDir;
-	shotDir.x = sinf(pos_y2);
+	shotDir.x = -sinf(pos_y2);
 	shotDir.y = 0.0f;
-	shotDir.z = cosf(pos_y2);
+	shotDir.z = -cosf(pos_y2);
+	shotDir = VNorm(shotDir);
+
+	const float MuzzleOffset = 0.8f; // 砲身の長さ（弾の発射位置）
+	VECTOR muzzlePos = VGet(
+		pos_x + shotDir.x * MuzzleOffset,
+		0.4f,
+		pos_z + shotDir.z * MuzzleOffset
+	);
 
 	bullets.push_back(
-		std::make_unique<Bullet>(
-			VGet(pos_x, 0.4f, pos_z),
-			shotDir
-		)
+		std::make_unique<Bullet>(muzzlePos, shotDir)
 	);
 }
 

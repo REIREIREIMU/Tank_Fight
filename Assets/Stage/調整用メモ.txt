@@ -145,10 +145,14 @@ void Player::Update()
 	}
 
 	// 弾発射
-	if (CheckHitKey(KEY_INPUT_SPACE))
+	static bool prevShot = false;
+	bool nowShot = CheckHitKey(KEY_INPUT_SPACE);
+
+	if (nowShot && !prevShot)
 	{
 		Shoot();
 	}
+	prevShot = nowShot;
 
 	// 弾更新
 	for (auto& b : bullets) b->Update();
@@ -210,6 +214,7 @@ void Player::Shoot()
 {
 	VECTOR shotDir;
 	shotDir.x = sinf(pos_y2);
+	shotDir.y = 0.0f;
 	shotDir.z = cosf(pos_y2);
 
 	bullets.push_back(
@@ -248,6 +253,8 @@ VECTOR Player::GetMouseWorldPos()
 class Bullet : public GameObject {
 public:
 	Bullet(const VECTOR& startPos, const VECTOR& dir);
+    ~Bullet();
+
     void Update()override;
     void Draw() override;
 
@@ -273,15 +280,25 @@ private:
 //Bullet.cpp
 #include "Bullet.h"
 
-Bullet::Bullet(const VECTOR& startPos, const VECTOR& dir)
+Bullet::Bullet(const VECTOR& startPos, const VECTOR& dir):
+    Bullet_m_handle(-1)
 {
     // 3Dモデルの読み込み
     Bullet_m_handle = MV1LoadModel("Assets/Bullet.mv1");
 
     m_pos     = startPos;
-    m_vel     = VScale(dir, 15.0f);
+    m_vel     = VScale(VNorm(dir), 0.005f);
     m_reflect = 2;
     m_alive   = true;
+
+    // 初期位置設定
+    MV1SetPosition(Bullet_m_handle, m_pos);
+
+}
+
+Bullet::~Bullet()
+{
+        MV1DeleteModel(Bullet_m_handle);
 }
 
 void Bullet::Update()
@@ -292,6 +309,10 @@ void Bullet::Update()
     m_pos = VAdd(m_pos, m_vel);
 
     CheckWallCollision();
+
+    // 弾の位置更新
+    MV1SetPosition(Bullet_m_handle, m_pos);
+
 }
 
 void Bullet::Draw()
@@ -332,6 +353,7 @@ bool Bullet::CheckHitWall(VECTOR& outNormal)
         outNormal = VGet(-1.0f, 0.0f, 0.0f);
         return true;
     }
+    return false;
 }
 
 void Bullet::Reflect(const VECTOR& normal)
@@ -353,5 +375,180 @@ void Bullet::Reflect(const VECTOR& normal)
     m_pos = VAdd(m_pos, VScale(m_vel, 0.1f));
     
     m_reflect--;
+}
+
+
+// Object.h
+#pragma once
+#include "../Library/GameObject.h"
+#include <fstream>
+#include <sstream>
+#include <vector>
+
+class Object : public GameObject {
+public:
+	Object();
+	~Object();
+
+	void Update() override;
+	void Draw() override;
+
+	bool CheckHit(float px, float pz);
+
+private:
+	int	Ground_m_handle; // 地面のハンドル
+	int	Block_m_handle;	 // ブロックのハンドル
+
+	std::vector<std::vector<int>> mapData;
+
+	int   Half_Size;     // 地面の表示する範囲
+	float Ground_Size;   // 地面の１マスのサイズ 
+
+	// オブジェクトの「Position」関連
+	VECTOR Map_pos;
+	float pos_x, pos_y,	pos_z;	
+
+	// CSV対応可
+	void LoadCSV(const char* filename);
+};
+
+
+// Object.cpp
+#include "Object.h"
+#include <cmath>
+
+// 当たり判定
+constexpr float Player_Half = 0.4f; // Player用（箱型）
+constexpr float Block_Half  = 0.5f; // Block用
+
+// AABB
+bool CheckAABB(
+	float ax, float az, float aHalf,
+	float bx, float bz, float bHalf)
+{
+	return
+		fabs(ax - bx) < (aHalf + bHalf) &&
+		fabs(az - bz) < (aHalf + bHalf);
+}
+
+Object::Object() :
+	Block_m_handle(-1), pos_x(0.0f), pos_y(0.0f), pos_z(0.0f),
+	Ground_m_handle(-1), Half_Size(50), Ground_Size(1.0f)
+{
+	// 3Dモデルの読み込み
+	Block_m_handle  = MV1LoadModel("Assets/Block.mv1");
+	Ground_m_handle = MV1LoadModel("Assets/Ground.mv1");
+
+	// 「CSV」読み込み
+	LoadCSV("Assets/Stage/Stage_00.csv");
+}
+
+Object::~Object()
+{
+	// モデルの削除
+	MV1DeleteModel(Block_m_handle);
+	MV1DeleteModel(Ground_m_handle);
+}
+
+void Object::Update()
+{
+}
+
+void Object::Draw()
+{
+	// 地面（ここは「CSV」対応してない）
+	{
+		// 地面を指定範囲内一面に埋めて表示
+		for (int x = -Half_Size; x <= Half_Size; x++){
+			for (int z = -Half_Size; z <= Half_Size; z++) {
+				pos_x = x * Ground_Size;
+				pos_z = z * Ground_Size;
+
+				MV1SetPosition(Ground_m_handle, VGet(pos_x, pos_y, pos_z));
+				MV1DrawModel(Ground_m_handle);
+			}
+		}
+	}
+
+	// 壁（CSV配置）
+	{
+		for (int x = 0; x < Map_pos.x; x++){
+			for (int z = 0; z < Map_pos.z; z++) {
+				// mapData[1]は「壁」
+				if (mapData[z][x] != 1) continue;
+
+				pos_x = (x + 0.5f - Map_pos.x * 0.5f) * Ground_Size;
+				pos_z = -(z + 0.5f - Map_pos.z * 0.5f) * Ground_Size;
+
+				// ブロックモデルの表示
+				MV1SetPosition(Block_m_handle, VGet(pos_x, pos_y, pos_z));
+				MV1DrawModel(Block_m_handle);
+
+				// デバッグ用 当たり判定
+				{
+					//VECTOR minPos = VGet(
+					//	pos_x - Block_Half,
+					//	0.0f,
+					//	pos_z - Block_Half
+					//);
+					//VECTOR maxPos = VGet(
+					//	pos_x + Block_Half,
+					//	1.0f,
+					//	pos_z + Block_Half
+					//);
+					//DrawCube3D(
+					//	minPos,
+					//	maxPos,
+					//	GetColor(0, 255, 0),  // 緑
+					//	GetColor(0, 255, 0),
+					//	FALSE
+					//);
+				}
+			}
+		}
+	}
+}
+
+bool Object::CheckHit(float px, float pz)
+{
+	for (int x = 0; x < Map_pos.x; x++) {
+		for (int z = 0; z < Map_pos.z; z++) {
+
+			if (mapData[z][x] != 1) continue;
+
+			float bx =  (x + 0.5f - Map_pos.x * 0.5f) * Ground_Size;
+			float bz = -(z + 0.5f - Map_pos.z * 0.5f) * Ground_Size;
+
+			if (CheckAABB(
+				px, pz, Player_Half,
+				bx, bz, Block_Half))
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+void Object::LoadCSV(const char* filename)
+{
+	std::ifstream file(filename);
+	std::string line;
+	mapData.clear();
+
+	while (std::getline(file, line))
+	{
+		std::stringstream ss(line);
+		std::string value;
+		std::vector<int> row;
+
+		while (std::getline(ss, value, ',')){
+			row.push_back(std::stoi(value));
+		}
+		mapData.push_back(row);
+	}
+
+	Map_pos.x = (int)mapData[0].size();
+	Map_pos.z = (int)mapData.size();
 }
 
