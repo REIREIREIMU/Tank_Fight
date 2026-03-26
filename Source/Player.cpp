@@ -6,9 +6,18 @@
 static const float Speed  = 0.025f;		// 移動速度
 static const float Angle  = 0.020f;		// 車体の移転速度
 
-Player::Player(Object* obj) : m_alive(true),
-	Body_m_handle(-1), Head_m_handle(-1),
-	pos_x(0.0f), pos_y1(DX_PI_F), pos_y2(0.0f), pos_z(0.0f), object(obj)
+Player::Player(Object* obj) :
+	m_alive(true),
+	m_Exploding(false),
+	m_Explosion_Handle(-1),
+	m_Explosion_Scale(0.0f),
+	Body_m_handle(-1),
+	Head_m_handle(-1),
+	pos_x(0.0f),
+	pos_y1(DX_PI_F), 
+	pos_y2(0.0f),
+	pos_z(0.0f), 
+	object(obj)
 {
 	// 3Dモデルの読み込み
 	Body_m_handle = MV1LoadModel("Assets/Player_Tank_Body.mv1");
@@ -40,93 +49,129 @@ Player::~Player()
 
 void Player::Update()
 {	
-	// 死亡したら何もできない
-	if (!m_alive) return;
+	// 生存中
+	if (m_alive) {
+		// 移動量計算
+		move_x = 0.0f, move_z = 0.0f;
 
-	// 移動量計算
-	move_x = 0.0f, move_z = 0.0f;
+		// 砲塔回転
+		VECTOR mousePos = GetMouseWorldPos();
+		VECTOR dir;
+		dir.x = mousePos.x - pos_x;
+		dir.z = mousePos.z - pos_z;
 
-	// 砲塔回転
-	VECTOR mousePos = GetMouseWorldPos();
-	VECTOR dir;
-	dir.x = mousePos.x - pos_x;
-	dir.z = mousePos.z - pos_z;
+		// マウスポインターを追従して回転
+		pos_y2 = atan2f(dir.x, dir.z) + DX_PI_F;
 
-	// マウスポインターを追従して回転
-	pos_y2 = atan2f(dir.x, dir.z) + DX_PI_F;
+		// 回転操作
+		if (CheckHitKey(KEY_INPUT_A)) { // 左回転
+			pos_y1 -= Angle;
+		}
+		if (CheckHitKey(KEY_INPUT_D)) { // 右回転
+			pos_y1 += Angle;
+		}
 
-	// 回転操作
-	if (CheckHitKey(KEY_INPUT_A)){ // 左回転
-		pos_y1 -= Angle;
+		forward.x = sinf(pos_y1);
+		forward.z = cosf(pos_y1);
+
+		// 移動操作
+		if (CheckHitKey(KEY_INPUT_W)) { // 前進
+			move_x -= forward.x * Speed;
+			move_z -= forward.z * Speed;
+		}
+		if (CheckHitKey(KEY_INPUT_S)) { // 後進
+			move_x += forward.x * Speed;
+			move_z += forward.z * Speed;
+		}
+
+		// スライド移動
+		float next_x = pos_x + move_x;
+		if (!object->CheckHit(next_x, pos_z, Config::Player_Half)) {
+			pos_x = next_x;
+		}
+		float next_z = pos_z + move_z;
+		if (!object->CheckHit(pos_x, next_z, Config::Player_Half)) {
+			pos_z = next_z;
+		}
+
+		// 弾発射
+		static bool prevShot = false;
+		bool nowShot = GetMouseInput();
+
+		if ((nowShot & MOUSE_INPUT_LEFT) && !(prevShot & MOUSE_INPUT_LEFT))
+		{
+			Shoot();
+		}
+		prevShot = nowShot;
+
+		// 弾更新
+		for (auto& b : bullets) b->Update();
+		bullets.erase(
+			std::remove_if(
+				bullets.begin(),
+				bullets.end(),
+				[](const std::unique_ptr<Bullet>& b)
+				{
+					return !b->IsAlive();
+				}),
+			bullets.end()
+		);
+
+		// 位置管理
+		Position = VGet(pos_x, 0.0f, pos_z);
+		Body_Rotation = VGet(0.0f, pos_y1, 0.0f); // 車体用回転
+		Head_Rotation = VGet(0.0f, pos_y2, 0.0f); // 砲塔用回転
+
+		// モデルの位置を設定する(車体)
+		MV1SetPosition(Body_m_handle, Position);		 // 位置座標
+		MV1SetRotationXYZ(Body_m_handle, Body_Rotation); // 回転座標
+
+		// モデルの位置を設定する(砲塔)
+		MV1SetPosition(Head_m_handle, Position);		 // 位置座標
+		MV1SetRotationXYZ(Head_m_handle, Head_Rotation); // 回転座標
 	}
-	if (CheckHitKey(KEY_INPUT_D)){ // 右回転
-		pos_y1 += Angle;
-	}
 
-	forward.x = sinf(pos_y1);
-	forward.z = cosf(pos_y1);
-
-	// 移動操作
-	if (CheckHitKey(KEY_INPUT_W)) { // 前進
-		move_x -= forward.x * Speed;
-		move_z -= forward.z * Speed;
-	}
-	if (CheckHitKey(KEY_INPUT_S)) { // 後進
-		move_x += forward.x * Speed;
-		move_z += forward.z * Speed;
-	}
-
-	// スライド移動
-	float next_x = pos_x + move_x;
-	if (!object->CheckHit(next_x, pos_z, Config::Player_Half)) {
-		pos_x = next_x;
-	}
-	float next_z = pos_z + move_z;
-	if (!object->CheckHit(pos_x, next_z, Config::Player_Half)) {
-		pos_z = next_z;
-	}
-
-	// 弾発射
-	static bool prevShot = false;
-	bool nowShot = GetMouseInput();
-
-	if ((nowShot & MOUSE_INPUT_LEFT) && !(prevShot & MOUSE_INPUT_LEFT))
+	// 爆発中
+	if (m_Exploding)
 	{
-		Shoot();
+		m_Explosion_Scale += Config::ExplosionGrowSpeed;
+
+		// 拡大
+		MV1SetScale(
+			m_Explosion_Handle,
+			VGet(
+				m_Explosion_Scale,
+				m_Explosion_Scale,
+				m_Explosion_Scale
+			)
+		);
+
+		// 最大サイズに達したら消す
+		if (m_Explosion_Scale >= Config::ExplosionEndScale)
+		{
+			MV1DeleteModel(m_Explosion_Handle);
+			m_Explosion_Handle = -1;
+			m_Exploding = false;
+		}
 	}
-	prevShot = nowShot;
-
-	// 弾更新
-	for (auto& b : bullets) b->Update();
-	bullets.erase(
-		std::remove_if(
-			bullets.begin(),
-			bullets.end(),
-			[](const std::unique_ptr<Bullet>& b)
-			{
-				return !b->IsAlive();
-			}),
-		bullets.end()
-	);
-
-	// 位置管理
-	Position	  = VGet(pos_x, 0.0f, pos_z);
-	Body_Rotation = VGet(0.0f, pos_y1, 0.0f); // 車体用回転
-	Head_Rotation = VGet(0.0f, pos_y2, 0.0f); // 砲塔用回転
-
-	// モデルの位置を設定する(車体)
-	MV1SetPosition(Body_m_handle, Position);		 // 位置座標
-	MV1SetRotationXYZ(Body_m_handle, Body_Rotation); // 回転座標
-
-	// モデルの位置を設定する(砲塔)
-	MV1SetPosition(Head_m_handle, Position);		 // 位置座標
-	MV1SetRotationXYZ(Head_m_handle, Head_Rotation); // 回転座標
 }
+
 
 void Player::Draw()
 {
-	// 死亡したら何もできない
-	if (!m_alive) return;
+	// 生存時
+	if (m_alive)
+	{
+		MV1DrawModel(Body_m_handle);
+		MV1DrawModel(Head_m_handle);
+		return;
+	}
+
+	// 死亡時
+	if (m_Exploding && m_Explosion_Handle != -1)
+	{
+		MV1DrawModel(m_Explosion_Handle);
+	}
 
 	// 当たり判定の可視化（デバッグ用）
 	{
@@ -150,9 +195,6 @@ void Player::Draw()
 		//);
 	}
 
-	// モデルの表示
-	MV1DrawModel(Body_m_handle);
-	MV1DrawModel(Head_m_handle);
 }
 
 void Player::Shoot()
@@ -185,14 +227,25 @@ void Player::Shoot()
 
 void Player::IsDead()
 {
+	if (!m_alive) return;
 	m_alive = false;
 
-	// モデルを消す
+	// 戦車モデルを消す
 	MV1DeleteModel(Body_m_handle);
 	MV1DeleteModel(Head_m_handle);
-
 	Body_m_handle = -1;
 	Head_m_handle = -1;
+
+	// 爆発モデル生成
+	m_Explosion_Handle = MV1LoadModel("Assets/Explosion.mv1");
+	m_Explosion_Scale = Config::ExplosionStartScale;
+	m_Exploding = true;
+
+	// 位置は戦車の位置
+	MV1SetPosition(m_Explosion_Handle, Position);
+	MV1SetScale(m_Explosion_Handle,
+		VGet(m_Explosion_Scale, m_Explosion_Scale, m_Explosion_Scale)
+	);
 }
 
 int Player::CountAliveBullets() const

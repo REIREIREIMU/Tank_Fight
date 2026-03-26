@@ -28,6 +28,10 @@ public:
 private:
 	bool m_alive;		// 生存フラグ（Player用）
 
+	bool  m_Exploding;          // 爆発中のフラグ
+	int   m_Explosion_Handle;   // 爆発モデルのハンドル
+	float m_Explosion_Scale;    // 現在サイズ（最初は小さい）
+
 	int	Body_m_handle,  // 車体のハンドル
 		Head_m_handle;  // 砲塔のハンドル
 
