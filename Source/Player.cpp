@@ -1,8 +1,8 @@
 #include "Player.h"
 #include "Object.h"
+#include "Config.h"
 #include <cmath>
 
-constexpr float    Player_Half  = 0.4f;	// Player用（箱型）
 static const float Speed  = 0.025f;		// 移動速度
 static const float Angle  = 0.020f;		// 車体の移転速度
 
@@ -13,7 +13,7 @@ Player::Player(Object* obj) : m_alive(true),
 	// 3Dモデルの読み込み
 	Body_m_handle = MV1LoadModel("Assets/Player_Tank_Body.mv1");
 	Head_m_handle = MV1LoadModel("Assets/Player_Tank_Head.mv1");
-
+	
 	// 位置管理
 	Position      = VGet( pos_x,  0.0f, pos_z);
 	Body_Rotation = VGet( 0.0f, pos_y1,  0.0f); // 車体用回転
@@ -78,11 +78,11 @@ void Player::Update()
 
 	// スライド移動
 	float next_x = pos_x + move_x;
-	if (!object->CheckHit(next_x, pos_z, Player_Half)) {
+	if (!object->CheckHit(next_x, pos_z, Config::Player_Half)) {
 		pos_x = next_x;
 	}
 	float next_z = pos_z + move_z;
-	if (!object->CheckHit(pos_x, next_z, Player_Half)) {
+	if (!object->CheckHit(pos_x, next_z, Config::Player_Half)) {
 		pos_z = next_z;
 	}
 

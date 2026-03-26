@@ -1,20 +1,17 @@
 #include "Bullet.h"
 #include "Object.h"
 #include "Player.h"
-
-constexpr float Player_Half = 0.4f; // Player用（箱型）
-constexpr float Bullet_Half = 0.1f; // Bullet用
+#include "Config.h"
 
 Bullet::Bullet
 (const VECTOR& startPos, const VECTOR& dir, Object* obj, Player* player)
-    : object(obj), player(player), Bullet_m_handle(-1)
+    : object(obj), player(player), m_reflect(2), Bullet_m_handle(-1)
 {
     // 3Dモデルの読み込み
     Bullet_m_handle = MV1LoadModel("Assets/Bullet.mv1");
 
     m_pos          = startPos;
     m_vel          = VScale(VNorm(dir), 0.025f);
-    m_reflect      = 2;
     m_alive        = true;
     m_trailGrowing = true;
 
@@ -42,8 +39,8 @@ void Bullet::Update()
         {
             VECTOR p = player->GetPosition();
 
-            if (fabs(m_pos.x - p.x) < (Bullet_Half + Player_Half) &&
-                fabs(m_pos.z - p.z) < (Bullet_Half + Player_Half))
+            if (fabs(m_pos.x - p.x) < (Config::Bullet_Half + Config::Player_Half) &&
+                fabs(m_pos.z - p.z) < (Config::Bullet_Half + Config::Player_Half))
             {
                 // プレイヤー消滅
                 player->IsDead();
@@ -119,8 +116,8 @@ void Bullet::CheckWallCollision()
 
     VECTOR nextPos = VAdd(m_pos, m_vel);
 
-    // まず X 方向だけ動かして判定
-    if (object->CheckHit(nextPos.x, m_pos.z, Bullet_Half))
+    // X方向
+    if (object->CheckHit(nextPos.x, m_pos.z, Config::Bullet_Half))
     {
         VECTOR normal = VGet(
             (m_vel.x > 0.0f) ? -1.0f : 1.0f,
@@ -131,8 +128,8 @@ void Bullet::CheckWallCollision()
         return;
     }
 
-    // 次に Z 方向
-    if (object->CheckHit(m_pos.x, nextPos.z, Bullet_Half))
+    // Z方向
+    if (object->CheckHit(m_pos.x, nextPos.z, Config::Bullet_Half))
     {
         VECTOR normal = VGet(
             0.0f,
@@ -160,7 +157,6 @@ void Bullet::Reflect(const VECTOR& normal)
 
     VECTOR n = VNorm(normal);
 
-    // R = V - 2(V・N)N
     float dot = VDot(m_vel, n);
     m_vel = VSub(m_vel, VScale(n, 2.0f * dot));
 

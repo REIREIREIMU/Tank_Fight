@@ -1,10 +1,6 @@
 #include "Object.h"
+#include "Config.h"
 #include <cmath>
-
-// 当たり判定
-constexpr float Player_Half = 0.4f; // Player用（箱型）
-constexpr float Block_Half  = 0.5f; // Block用
-constexpr float Bullet_Half = 0.1f; // Bullet用
 
 // AABB
 bool CheckAABB(
@@ -106,7 +102,7 @@ bool Object::CheckHit(float px, float pz, float halfSize)
 
 			if (CheckAABB(
 				px, pz, halfSize,
-				bx, bz, Block_Half))
+				bx, bz, Config::Block_Half))
 			{
 				return true;
 			}

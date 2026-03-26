@@ -147,6 +147,7 @@
     <ClInclude Include="Source\Bullet.h">
       <Filter>SceneManager\PlayScene</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Config.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Library">

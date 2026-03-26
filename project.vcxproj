@@ -159,6 +159,7 @@
     <ClInclude Include="Source\Bullet.h" />
     <ClInclude Include="Source\Camera.h" />
     <ClInclude Include="Source\ClearScene.h" />
+    <ClInclude Include="Source\Config.h" />
     <ClInclude Include="Source\GameOverScene.h" />
     <ClInclude Include="Source\Object.h" />
     <ClInclude Include="Source\Player.h" />

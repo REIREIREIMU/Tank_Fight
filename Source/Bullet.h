@@ -39,5 +39,5 @@ private:
 
     // 当たり判定用（壁）
     Object* object;     // Objectのポインタを作成
-    Player* player;   // Playerのポインタを作成
+    Player* player;     // Playerのポインタを作成
 };
