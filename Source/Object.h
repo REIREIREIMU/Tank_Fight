@@ -14,6 +14,9 @@ public:
 
 	bool CheckHit(float px, float pz, float halfSize);
 
+	// プレイヤー初期位置取得
+	bool GetPlayerSpawnPos(VECTOR& outPos);
+
 private:
 	int	Ground_m_handle; // 地面のハンドル
 	int	Block_m_handle;	 // ブロックのハンドル

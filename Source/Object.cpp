@@ -111,6 +111,24 @@ bool Object::CheckHit(float px, float pz, float halfSize)
 	return false;
 }
 
+bool Object::GetPlayerSpawnPos(VECTOR& outPos)
+{
+	for (int z = 0; z < Map_pos.z; z++){
+		for (int x = 0; x < Map_pos.x; x++)
+		{
+			if (mapData[z][x] == 9)
+			{
+				float px =  (x + 0.5f - Map_pos.x * 0.5f) * Ground_Size;
+				float pz = -(z + 0.5f - Map_pos.z * 0.5f) * Ground_Size;
+
+				outPos = VGet(px, 0.0f, pz);
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 void Object::LoadCSV(const char* filename)
 {
 	std::ifstream file(filename);
