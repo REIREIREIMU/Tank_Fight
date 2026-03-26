@@ -18,7 +18,6 @@ private:
 
     VECTOR m_pos;        // ’e‚ÌˆÊ’u
     VECTOR m_vel;        // ’e‚Ì‘¬“x
-    float  m_radius;     // ’e‚Ì“–‚½‚è”»’è”¼Œa
     int    m_reflect;    // ’e‚Ì”½Ë‰ñ”
     bool   m_alive;      // ¶‘¶ƒtƒ‰ƒO
 

@@ -12,7 +12,7 @@ public:
 	void Update() override;
 	void Draw() override;
 
-	bool CheckHit(float px, float pz);
+	bool CheckHit(float px, float pz, float halfSize);
 
 private:
 	int	Ground_m_handle; // ’n–Ê‚Ìƒnƒ“ƒhƒ‹

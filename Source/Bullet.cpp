@@ -1,6 +1,8 @@
 #include "Bullet.h"
 #include "Object.h"
 
+constexpr float Bullet_Half = 0.1f; // Bullet—p
+
 Bullet::Bullet
 (const VECTOR& startPos, const VECTOR& dir, Object* obj)
     : object(obj), Bullet_m_handle(-1)
@@ -52,6 +54,7 @@ void Bullet::Draw()
     {
       /*  printfDx("Bullet Draw Pos:(%.2f, %.2f, %.2f)\n",
             m_pos.x, m_pos.y, m_pos.z);*/
+
     }
 
 }
@@ -63,7 +66,7 @@ void Bullet::CheckWallCollision()
     VECTOR nextPos = VAdd(m_pos, m_vel);
 
     // ‚Ü‚¸ X •ûŒü‚¾‚¯“®‚©‚µ‚Ä”»’è
-    if (object->CheckHit(nextPos.x, m_pos.z))
+    if (object->CheckHit(nextPos.x, m_pos.z, Bullet_Half))
     {
         VECTOR normal = VGet(
             (m_vel.x > 0.0f) ? -1.0f : 1.0f,
@@ -75,7 +78,7 @@ void Bullet::CheckWallCollision()
     }
 
     // ŽŸ‚É Z •ûŒü
-    if (object->CheckHit(m_pos.x, nextPos.z))
+    if (object->CheckHit(m_pos.x, nextPos.z, Bullet_Half))
     {
         VECTOR normal = VGet(
             0.0f,

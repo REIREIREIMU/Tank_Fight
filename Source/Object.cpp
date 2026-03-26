@@ -4,6 +4,7 @@
 // 当たり判定
 constexpr float Player_Half = 0.4f; // Player用（箱型）
 constexpr float Block_Half  = 0.5f; // Block用
+constexpr float Bullet_Half = 0.1f; // Bullet用
 
 // AABB
 bool CheckAABB(
@@ -93,7 +94,7 @@ void Object::Draw()
 	}
 }
 
-bool Object::CheckHit(float px, float pz)
+bool Object::CheckHit(float px, float pz, float halfSize)
 {
 	for (int x = 0; x < Map_pos.x; x++) {
 		for (int z = 0; z < Map_pos.z; z++) {
@@ -104,7 +105,7 @@ bool Object::CheckHit(float px, float pz)
 			float bz = -(z + 0.5f - Map_pos.z * 0.5f) * Ground_Size;
 
 			if (CheckAABB(
-				px, pz, Player_Half,
+				px, pz, halfSize,
 				bx, bz, Block_Half))
 			{
 				return true;

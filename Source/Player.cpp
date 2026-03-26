@@ -75,11 +75,11 @@ void Player::Update()
 
 	// ƒXƒ‰ƒCƒhˆÚ“®
 	float next_x = pos_x + move_x;
-	if (!object->CheckHit(next_x, pos_z)) {
+	if (!object->CheckHit(next_x, pos_z, Player_Half)) {
 		pos_x = next_x;
 	}
 	float next_z = pos_z + move_z;
-	if (!object->CheckHit(pos_x, next_z)) {
+	if (!object->CheckHit(pos_x, next_z, Player_Half)) {
 		pos_z = next_z;
 	}
 
