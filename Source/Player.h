@@ -17,6 +17,9 @@ public:
 
 	void Shoot(); // 弾を発射
 
+	// 現在生きている弾数を数える関数
+	int CountAliveBullets() const;
+
 private:
 	int	Body_m_handle,  // 車体のハンドル
 		Head_m_handle;  // 砲塔のハンドル
@@ -39,6 +42,9 @@ private:
 
 	// 弾管理
 	std::vector<std::unique_ptr<Bullet>> bullets;
+
+	// 最大同時発射数
+	static constexpr int Max_Player_Bullets = 3;
 
 	// 当たり判定用（壁）
 	Object* object = nullptr;

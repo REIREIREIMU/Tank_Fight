@@ -151,6 +151,11 @@ void Player::Draw()
 
 void Player::Shoot()
 {
+	// プレイヤーの弾が 3発ステージ上に存在している限り撃てない
+	if (CountAliveBullets() >= Max_Player_Bullets){
+		return;
+	}
+
 	VECTOR shotDir;
 	shotDir.x = -sinf(pos_y2);
 	shotDir.y = 0.0f;
@@ -167,6 +172,19 @@ void Player::Shoot()
 	bullets.push_back(
 		std::make_unique<Bullet>(muzzlePos, shotDir, object)
 	);
+}
+
+int Player::CountAliveBullets() const
+{
+	int count = 0;
+	for (const auto& b : bullets)
+	{
+		if (b->IsAlive())
+		{
+			count++;
+		}
+	}
+	return count;
 }
 
 VECTOR Player::GetMouseWorldPos()

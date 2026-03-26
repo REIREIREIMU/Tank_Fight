@@ -69,7 +69,7 @@ void Bullet::Update()
 
 void Bullet::Draw()
 {
-    if (!m_alive)
+    if (m_alive)
     {  
         // ƒ‚ƒfƒ‹‚Ì•\Ž¦
         MV1DrawModel(Bullet_m_handle);
