@@ -18,6 +18,7 @@ private:
 
     VECTOR m_pos;        // 弾の位置
     VECTOR m_vel;        // 弾の速度
+    float  m_radius;     // 弾の当たり判定半径
     int    m_reflect;    // 弾の反射回数
     bool   m_alive;      // 生存フラグ
 
@@ -29,5 +30,5 @@ private:
     void Reflect(const VECTOR& normal);
 
     // 当たり判定用（壁）
-    Object* object;
+    Object* object = nullptr;
 };

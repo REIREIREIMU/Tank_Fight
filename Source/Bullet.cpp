@@ -12,7 +12,7 @@ Bullet::Bullet
     m_vel     = VScale(VNorm(dir), 0.025f);
     m_reflect = 2;
     m_alive   = true;
-
+   
     // ‰ŠúˆÊ’uİ’è
     MV1SetPosition(Bullet_m_handle, m_pos);
 

@@ -3,7 +3,7 @@
 #include <cmath>
 
 constexpr float    Player_Half  = 0.4f;	// Player用（箱型）
-static const float Speed  = 0.035f;		// 移動速度
+static const float Speed  = 0.025f;		// 移動速度
 static const float Angle  = 0.020f;		// 車体の移転速度
 
 Player::Player(Object* obj) :

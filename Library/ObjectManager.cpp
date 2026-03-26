@@ -20,13 +20,18 @@ void ObjectManager::Init()
 
 void ObjectManager::Update()
 {
-	std::list<GameObject*> updateObjects = *objects;
-	for (GameObject* obj : updateObjects) {
+	for (auto itr = objects->begin(); itr != objects->end(); )
+	{
+		GameObject* obj = *itr;
 		running = obj;
 		obj->Update();
 		running = nullptr;
 		if (obj->DestroyRequested()) {
+			itr = objects->erase(itr);
 			delete obj;
+		}
+		else {
+			++itr;
 		}
 	}
 }

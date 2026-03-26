@@ -41,7 +41,7 @@ private:
 	std::vector<std::unique_ptr<Bullet>> bullets;
 
 	// 当たり判定用（壁）
-	Object* object;
+	Object* object = nullptr;
 
 	// マウスポインター用ベクター
 	VECTOR GetMouseWorldPos();
