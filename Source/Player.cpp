@@ -6,7 +6,7 @@ constexpr float    Player_Half  = 0.4f;	// Player用（箱型）
 static const float Speed  = 0.025f;		// 移動速度
 static const float Angle  = 0.020f;		// 車体の移転速度
 
-Player::Player(Object* obj) :
+Player::Player(Object* obj) : m_alive(true),
 	Body_m_handle(-1), Head_m_handle(-1),
 	pos_x(0.0f), pos_y1(DX_PI_F), pos_y2(0.0f), pos_z(0.0f), object(obj)
 {
@@ -39,7 +39,10 @@ Player::~Player()
 }
 
 void Player::Update()
-{
+{	
+	// 死亡したら何もできない
+	if (!m_alive) return;
+
 	// 移動量計算
 	move_x = 0.0f, move_z = 0.0f;
 
@@ -122,6 +125,9 @@ void Player::Update()
 
 void Player::Draw()
 {
+	// 死亡したら何もできない
+	if (!m_alive) return;
+
 	// 当たり判定の可視化（デバッグ用）
 	{
 		//VECTOR minPos = VGet(
@@ -151,6 +157,9 @@ void Player::Draw()
 
 void Player::Shoot()
 {
+	// 死亡したら何もできない
+	if (!m_alive) return;
+
 	// プレイヤーの弾が 3発ステージ上に存在している限り撃てない
 	if (CountAliveBullets() >= Max_Player_Bullets){
 		return;
@@ -170,8 +179,20 @@ void Player::Shoot()
 	);
 
 	bullets.push_back(
-		std::make_unique<Bullet>(muzzlePos, shotDir, object)
+		std::make_unique<Bullet>(muzzlePos, shotDir, object, this)
 	);
+}
+
+void Player::IsDead()
+{
+	m_alive = false;
+
+	// モデルを消す
+	MV1DeleteModel(Body_m_handle);
+	MV1DeleteModel(Head_m_handle);
+
+	Body_m_handle = -1;
+	Head_m_handle = -1;
 }
 
 int Player::CountAliveBullets() const

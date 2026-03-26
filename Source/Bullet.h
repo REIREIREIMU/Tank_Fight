@@ -3,10 +3,11 @@
 #include <vector>
 
 class Object;
+class Player;
 
 class Bullet : public GameObject {
 public:
-	Bullet(const VECTOR& startPos, const VECTOR& dir, Object* obj);
+    Bullet(const VECTOR& startPos, const VECTOR& dir, Object* obj, Player* player);
     ~Bullet();
 
     void Update()override;
@@ -37,5 +38,6 @@ private:
     static constexpr int MaxTrailPoints = 60;
 
     // 当たり判定用（壁）
-    Object* object = nullptr;
+    Object* object;     // Objectのポインタを作成
+    Player* player;   // Playerのポインタを作成
 };

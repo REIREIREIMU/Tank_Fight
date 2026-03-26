@@ -15,12 +15,19 @@ public:
 	void Update() override;
 	void Draw() override;
 
-	void Shoot(); // 弾を発射
+	void Shoot();   // 弾を発射
+	void IsDead();  // 死亡関数
+
+	bool IsAlive() const { return m_alive; }
+
+	VECTOR GetPosition() const { return Position; }
 
 	// 現在生きている弾数を数える関数
 	int CountAliveBullets() const;
 
 private:
+	bool m_alive;		// 生存フラグ（Player用）
+
 	int	Body_m_handle,  // 車体のハンドル
 		Head_m_handle;  // 砲塔のハンドル
 

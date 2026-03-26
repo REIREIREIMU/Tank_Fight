@@ -1,11 +1,13 @@
 #include "Bullet.h"
 #include "Object.h"
+#include "Player.h"
 
+constexpr float Player_Half = 0.4f; // Player用（箱型）
 constexpr float Bullet_Half = 0.1f; // Bullet用
 
 Bullet::Bullet
-(const VECTOR& startPos, const VECTOR& dir, Object* obj)
-    : object(obj), Bullet_m_handle(-1)
+(const VECTOR& startPos, const VECTOR& dir, Object* obj, Player* player)
+    : object(obj), player(player), Bullet_m_handle(-1)
 {
     // 3Dモデルの読み込み
     Bullet_m_handle = MV1LoadModel("Assets/Bullet.mv1");
@@ -31,17 +33,34 @@ Bullet::~Bullet()
 
 void Bullet::Update()
 {
-    if (m_alive){
+    if (m_alive) {
         // 移動
         m_pos = VAdd(m_pos, m_vel);
 
+        // プレイヤーとの当たり判定
+        if (player && player->IsAlive())
+        {
+            VECTOR p = player->GetPosition();
+
+            if (fabs(m_pos.x - p.x) < (Bullet_Half + Player_Half) &&
+                fabs(m_pos.z - p.z) < (Bullet_Half + Player_Half))
+            {
+                // プレイヤー消滅
+                player->IsDead();
+
+                // 弾も消す
+                m_alive = false;
+                return;
+            }
+        }
+
         // 弾が生きている間は軌道生成
-        if (m_trailGrowing){
+        if (m_trailGrowing) {
             // 軌道を保存
             m_trail.push_back(m_pos);
 
             // 軌道線の後ろが徐々に消える
-            if ((int)m_trail.size() > MaxTrailPoints){
+            if ((int)m_trail.size() > MaxTrailPoints) {
                 m_trail.erase(m_trail.begin());
             }
         }
@@ -61,7 +80,7 @@ void Bullet::Update()
         m_trailGrowing = false;
 
         // 軌道線の後ろが徐々に消える
-        if (!m_trail.empty()){
+        if (!m_trail.empty()) {
             m_trail.erase(m_trail.begin());
         }
     }
