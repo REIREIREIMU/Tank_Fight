@@ -1,14 +1,22 @@
 //Player.h
 #pragma once
+#include "Bullet.h"
 #include "../Library/GameObject.h"
+
+#include <vector>
+#include <memory>
+
+class Object;
 
 class Player : public GameObject {
 public:
-	Player();
+	Player(Object* object);
 	~Player();
 
 	void Update() override;
 	void Draw() override;
+
+	void Shoot(); // 弾を発射
 
 private:
 	int	Body_m_handle,  // 車体のハンドル
@@ -19,6 +27,9 @@ private:
 		  pos_y2,	// 砲塔用 Y座標
 		  pos_z;	// プレイヤー用座標（x,y,z）
 
+	// プレイヤー移動量
+	float move_x, move_z;
+
 	// プレイヤー用ベクター
 	VECTOR Position;		// 移動
 	VECTOR Body_Rotation,	// 回転(車体)
@@ -26,6 +37,12 @@ private:
 
 	// 向いている方向に前進後進する為のベクター
 	VECTOR forward;
+
+	// 弾管理
+	std::vector<std::unique_ptr<Bullet>> bullets;
+
+	// 当たり判定用（壁）
+	Object* object;
 
 	// マウスポインター用ベクター
 	VECTOR GetMouseWorldPos();
@@ -43,12 +60,16 @@ private:
 
 //Player.cpp
 #include "Player.h"
+#include "Object.h"
+#include <cmath>
 
-static const float Speed = 0.05f;
-static const float Angle = 0.02f;
+constexpr float    Player_Half = 0.4f;	// Player用（箱型）
+static const float Speed  = 0.035f;		// 移動速度
+static const float Angle  = 0.020f;		// 車体の移転速度
 
-Player::Player() :Body_m_handle(-1), Head_m_handle(-1),
-	pos_x(0.0f), pos_y1(DX_PI_F), pos_y2(0.0f), pos_z(0.0f)
+Player::Player(Object* obj) :
+	Body_m_handle(-1), Head_m_handle(-1),
+	pos_x(0.0f), pos_y1(DX_PI_F), pos_y2(0.0f), pos_z(0.0f), object(obj)
 {
 	// 3Dモデルの読み込み
 	Body_m_handle = MV1LoadModel("Assets/Player_Tank_Body.mv1");
@@ -58,6 +79,7 @@ Player::Player() :Body_m_handle(-1), Head_m_handle(-1),
 	Position      = VGet( pos_x,  0.0f, pos_z);
 	Body_Rotation = VGet( 0.0f, pos_y1,  0.0f); // 車体用回転
 	Head_Rotation = VGet( 0.0f, pos_y2,  0.0f); // 砲塔用回転
+
 	forward.x	  = sinf(pos_y1);
 	forward.z	  = cosf(pos_y1);
 
@@ -79,15 +101,17 @@ Player::~Player()
 
 void Player::Update()
 {
-	VECTOR mousePos = GetMouseWorldPos();
+	// 移動量計算
+	move_x = 0.0f, move_z = 0.0f;
 
+	// 砲塔回転
+	VECTOR mousePos = GetMouseWorldPos();
 	VECTOR dir;
 	dir.x = mousePos.x - pos_x;
 	dir.z = mousePos.z - pos_z;
 
-	pos_y2 = atan2f(dir.x, dir.z);
-	// ↓これがないとマウスポインターと真逆の方を向く
-	pos_y2 += DX_PI_F;
+	// マウスポインターを追従して回転
+	pos_y2 = atan2f(dir.x, dir.z) + DX_PI_F;
 
 	// 回転操作
 	if (CheckHitKey(KEY_INPUT_A)){ // 左回転
@@ -97,22 +121,52 @@ void Player::Update()
 		pos_y1 += Angle;
 	}
 
+	forward.x = sinf(pos_y1);
+	forward.z = cosf(pos_y1);
+
 	// 移動操作
 	if (CheckHitKey(KEY_INPUT_W)) { // 前進
-		pos_x -= forward.x * Speed;
-		pos_z -= forward.z * Speed;
+		move_x -= forward.x * Speed;
+		move_z -= forward.z * Speed;
 	}
 	if (CheckHitKey(KEY_INPUT_S)) { // 後進
-		pos_x += forward.x * Speed;
-		pos_z += forward.z * Speed;
+		move_x += forward.x * Speed;
+		move_z += forward.z * Speed;
 	}
+
+	// スライド移動
+	float next_x = pos_x + move_x;
+	if (!object->CheckHit(next_x, pos_z)) {
+		pos_x = next_x;
+	}
+	float next_z = pos_z + move_z;
+	if (!object->CheckHit(pos_x, next_z)) {
+		pos_z = next_z;
+	}
+
+	// 弾発射
+	if (CheckHitKey(KEY_INPUT_SPACE))
+	{
+		Shoot();
+	}
+
+	// 弾更新
+	for (auto& b : bullets) b->Update();
+	bullets.erase(
+		std::remove_if(
+			bullets.begin(),
+			bullets.end(),
+			[](const std::unique_ptr<Bullet>& b)
+			{
+				return !b->IsAlive();
+			}),
+		bullets.end()
+	);
 
 	// 位置管理
 	Position	  = VGet(pos_x, 0.0f, pos_z);
 	Body_Rotation = VGet(0.0f, pos_y1, 0.0f); // 車体用回転
 	Head_Rotation = VGet(0.0f, pos_y2, 0.0f); // 砲塔用回転
-	forward.x     = sinf(pos_y1);
-	forward.z     = cosf(pos_y1);
 
 	// モデルの位置を設定する(車体)
 	MV1SetPosition(Body_m_handle, Position);		 // 位置座標
@@ -125,9 +179,45 @@ void Player::Update()
 
 void Player::Draw()
 {
+	// 当たり判定の可視化（デバッグ用）
+	{
+		//VECTOR minPos = VGet(
+		//	pos_x - Player_Half,
+		//	0.0f,
+		//	pos_z - Player_Half
+		//);
+		//VECTOR maxPos = VGet(
+		//	pos_x + Player_Half,
+		//	1.0f,
+		//	pos_z + Player_Half
+		//);
+		//// 赤いワイヤーフレームの箱
+		//DrawCube3D(
+		//	minPos,
+		//	maxPos,
+		//	GetColor(255, 0, 0),
+		//	GetColor(255, 0, 0),
+		//	FALSE
+		//);
+	}
+
 	// モデルの表示
 	MV1DrawModel(Body_m_handle);
 	MV1DrawModel(Head_m_handle);
+}
+
+void Player::Shoot()
+{
+	VECTOR shotDir;
+	shotDir.x = sinf(pos_y2);
+	shotDir.z = cosf(pos_y2);
+
+	bullets.push_back(
+		std::make_unique<Bullet>(
+			VGet(pos_x, 0.4f, pos_z),
+			shotDir
+		)
+	);
 }
 
 VECTOR Player::GetMouseWorldPos()
@@ -151,124 +241,117 @@ VECTOR Player::GetMouseWorldPos()
 }
 
 
-//Object.h
+//Bullet.h
 #pragma once
 #include "../Library/GameObject.h"
-#include <fstream>
-#include <sstream>
-#include <vector>
 
-class Object : public GameObject {
+class Bullet : public GameObject {
 public:
-	Object();
-	~Object();
+	Bullet(const VECTOR& startPos, const VECTOR& dir);
+    void Update()override;
+    void Draw() override;
 
-	void Update() override;
-	void Draw() override;
+    bool IsAlive() const { return m_alive; }
 
 private:
-	int	Ground_m_handle; // 地面のハンドル
-	int	Block_m_handle;	 // ブロックのハンドル
+    int Bullet_m_handle; // 弾のハンドル
 
-	std::vector<std::vector<int>> mapData;
+    VECTOR m_pos;        // 弾の位置
+    VECTOR m_vel;        // 弾の速度
+    int    m_reflect;    // 弾の反射回数
+    bool   m_alive;      // 生存フラグ
 
-	int   Half_Size;     // 地面の表示する範囲
-	float Ground_Size;   // 地面の１マスのサイズ 
+    // 壁との当たり判定
+    void CheckWallCollision();
+    bool CheckHitWall(VECTOR& outNormal);
 
-	// オブジェクトの「Position」関連
-	VECTOR Map_pos;
-	float pos_x, pos_y,	pos_z;	
-
-	// CSV対応可
-	void LoadCSV(const char* filename);
+    // 反射処理
+    void Reflect(const VECTOR& normal);
 };
 
 
-//Object.cpp
-#include "Object.h"
+//Bullet.cpp
+#include "Bullet.h"
 
-Object::Object() :
-	Block_m_handle(-1), pos_x(0.0f), pos_y(0.0f), pos_z(0.0f),
-	Ground_m_handle(-1), Half_Size(50), Ground_Size(1.0f)
+Bullet::Bullet(const VECTOR& startPos, const VECTOR& dir)
 {
-	// 3Dモデルの読み込み
-	Block_m_handle  = MV1LoadModel("Assets/Block.mv1");
-	Ground_m_handle = MV1LoadModel("Assets/Ground.mv1");
+    // 3Dモデルの読み込み
+    Bullet_m_handle = MV1LoadModel("Assets/Bullet.mv1");
 
-	// 「CSV」読み込み
-	LoadCSV("Assets/Stage/Stage_00.csv");
+    m_pos     = startPos;
+    m_vel     = VScale(dir, 15.0f);
+    m_reflect = 2;
+    m_alive   = true;
 }
 
-Object::~Object()
+void Bullet::Update()
 {
-	// モデルの削除
-	MV1DeleteModel(Block_m_handle);
-	MV1DeleteModel(Ground_m_handle);
+    if (!m_alive) return;
+
+    // 移動
+    m_pos = VAdd(m_pos, m_vel);
+
+    CheckWallCollision();
 }
 
-void Object::Update()
+void Bullet::Draw()
 {
+    if (!m_alive) return;
+
+    // モデルの表示
+    MV1DrawModel(Bullet_m_handle);
+
+    // デバッグ用表示
+    {
+        printfDx("Bullet Draw Pos:(%.2f, %.2f, %.2f)\n",
+            m_pos.x, m_pos.y, m_pos.z);
+    }
+
 }
 
-void Object::Draw()
+void Bullet::CheckWallCollision()
 {
-	// 地面（ここは「CSV」対応してない）
-	{
-		// 地面を指定範囲内一面に埋めて表示
-		for (int x = -Half_Size; x <= Half_Size; x++)
-		{
-			for (int z = -Half_Size; z <= Half_Size; z++) {
+    VECTOR hitNormal;
 
-				pos_x = x * Ground_Size;
-				pos_z = z * Ground_Size;
+    if (!CheckHitWall(hitNormal))
+        return;
 
-				MV1SetPosition(Ground_m_handle, VGet(pos_x, pos_y, pos_z));
-				MV1DrawModel(Ground_m_handle);
-			}
-		}
-	}
-
-	// 壁（CSV配置）
-	{
-		for (int x = 0; x < Map_pos.x; x++){
-			for (int z = 0; z < Map_pos.z; z++) {
-				// mapData[1]は「壁」
-				if (mapData[z][x] == 1){
-					pos_x = (x - Map_pos.x / 2) * Ground_Size;
-					pos_z = -(z - Map_pos.z / 2.5) * Ground_Size;
-
-					// ブロックモデルの表示
-					MV1SetPosition(Block_m_handle, VGet(pos_x, pos_y, pos_z));
-					MV1DrawModel(Block_m_handle);
-				}
-			}
-		}
-	}
+    Reflect(hitNormal);
 }
 
-void Object::LoadCSV(const char* filename)
+bool Bullet::CheckHitWall(VECTOR& outNormal)
 {
-	std::ifstream file(filename);
-	std::string line;
+    // X方向の壁
+    if (m_pos.x < 0.0f)
+    {
+        outNormal = VGet(1.0f, 0.0f, 0.0f);
+        return true;
+    }
+    if (m_pos.x > 100.0f)
+    {
+        outNormal = VGet(-1.0f, 0.0f, 0.0f);
+        return true;
+    }
+}
 
-	mapData.clear();
+void Bullet::Reflect(const VECTOR& normal)
+{
+    // 反射が終えたら消える
+    if (m_reflect <= 0)
+    {
+        m_alive = false;
+        return;
+    }
 
-	while (std::getline(file, line))
-	{
-		std::stringstream ss(line);
+    VECTOR n = VNorm(normal);
 
-		std::string value;
-		std::vector<int> row;
+    // R = V - 2(V・N)N
+    float dot = VDot(m_vel, n);
+    m_vel = VSub(m_vel, VScale(n, 2.0f * dot));
 
-		while (std::getline(ss, value, ','))
-		{
-			row.push_back(std::stoi(value));
-		}
-
-		mapData.push_back(row);
-	}
-
-	Map_pos.x = (int)mapData[0].size();
-	Map_pos.z = (int)mapData.size();
+    // めり込み防止
+    m_pos = VAdd(m_pos, VScale(m_vel, 0.1f));
+    
+    m_reflect--;
 }
 

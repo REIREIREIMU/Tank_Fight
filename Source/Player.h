@@ -1,5 +1,9 @@
 #pragma once
+#include "Bullet.h"
 #include "../Library/GameObject.h"
+
+#include <vector>
+#include <memory>
 
 class Object;
 
@@ -10,6 +14,8 @@ public:
 
 	void Update() override;
 	void Draw() override;
+
+	void Shoot(); // 弾を発射
 
 private:
 	int	Body_m_handle,  // 車体のハンドル
@@ -30,6 +36,9 @@ private:
 
 	// 向いている方向に前進後進する為のベクター
 	VECTOR forward;
+
+	// 弾管理
+	std::vector<std::unique_ptr<Bullet>> bullets;
 
 	// 当たり判定用（壁）
 	Object* object;

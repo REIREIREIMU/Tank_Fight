@@ -3,29 +3,26 @@
 
 class Bullet : public GameObject {
 public:
-	Bullet();
+	Bullet(const VECTOR& startPos, const VECTOR& dir);
+    ~Bullet();
 
     void Update()override;
     void Draw() override;
 
-    // 発射
-    void Fire(const VECTOR& startPos, float angle);
-    // 生存判定
     bool IsAlive() const { return m_alive; }
-    // 位置取得
-    VECTOR GetPos() const { return m_pos; }
 
 private:
+    int Bullet_m_handle; // 弾のハンドル
+
+    VECTOR m_pos;        // 弾の位置
+    VECTOR m_vel;        // 弾の速度
+    int    m_reflect;    // 弾の反射回数
+    bool   m_alive;      // 生存フラグ
+
     // 壁との当たり判定
+    void CheckWallCollision();
     bool CheckHitWall(VECTOR& outNormal);
 
     // 反射処理
     void Reflect(const VECTOR& normal);
-
-    VECTOR m_pos;     // 位置
-    VECTOR m_vel;     // 速度
-    float  m_radius;  // 当たり判定半径
-    int    m_reflect; // 残り反射回数
-    bool   m_alive;
-
 };

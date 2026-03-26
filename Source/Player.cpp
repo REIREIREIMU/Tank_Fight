@@ -83,6 +83,29 @@ void Player::Update()
 		pos_z = next_z;
 	}
 
+	// 弾発射
+	static bool prevShot = false;
+	bool nowShot = CheckHitKey(KEY_INPUT_SPACE);
+
+	if (nowShot && !prevShot)
+	{
+		Shoot();
+	}
+	prevShot = nowShot;
+
+	// 弾更新
+	for (auto& b : bullets) b->Update();
+	bullets.erase(
+		std::remove_if(
+			bullets.begin(),
+			bullets.end(),
+			[](const std::unique_ptr<Bullet>& b)
+			{
+				return !b->IsAlive();
+			}),
+		bullets.end()
+	);
+
 	// 位置管理
 	Position	  = VGet(pos_x, 0.0f, pos_z);
 	Body_Rotation = VGet(0.0f, pos_y1, 0.0f); // 車体用回転
@@ -124,6 +147,21 @@ void Player::Draw()
 	// モデルの表示
 	MV1DrawModel(Body_m_handle);
 	MV1DrawModel(Head_m_handle);
+}
+
+void Player::Shoot()
+{
+	VECTOR shotDir;
+	shotDir.x = sinf(pos_y2);
+	shotDir.y = 0.0f;
+	shotDir.z = cosf(pos_y2);
+
+	bullets.push_back(
+		std::make_unique<Bullet>(
+			VGet(pos_x, 0.4f, pos_z),
+			shotDir
+		)
+	);
 }
 
 VECTOR Player::GetMouseWorldPos()

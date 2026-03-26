@@ -65,6 +65,9 @@
     <ClCompile Include="Source\Object.cpp">
       <Filter>SceneManager\PlayScene</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Bullet.cpp">
+      <Filter>SceneManager\PlayScene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Screen.h" />
@@ -139,6 +142,9 @@
       <Filter>SceneManager\PlayScene</Filter>
     </ClInclude>
     <ClInclude Include="Source\Object.h">
+      <Filter>SceneManager\PlayScene</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Bullet.h">
       <Filter>SceneManager\PlayScene</Filter>
     </ClInclude>
   </ItemGroup>

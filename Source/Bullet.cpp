@@ -1,12 +1,24 @@
 #include "Bullet.h"
 
-Bullet::Bullet()
+Bullet::Bullet(const VECTOR& startPos, const VECTOR& dir):
+    Bullet_m_handle(-1)
 {
-    m_pos = VGet(0, 0, 0);
-    m_vel = VGet(0, 0, 0);
-    m_radius = 5.0f;
-    m_reflect = 0;
-    m_alive = false;
+    // 3Dモデルの読み込み
+    Bullet_m_handle = MV1LoadModel("Assets/Bullet.mv1");
+
+    m_pos     = startPos;
+    m_vel     = VScale(VNorm(dir), 0.005f);
+    m_reflect = 2;
+    m_alive   = true;
+
+    // 初期位置設定
+    MV1SetPosition(Bullet_m_handle, m_pos);
+
+}
+
+Bullet::~Bullet()
+{
+        MV1DeleteModel(Bullet_m_handle);
 }
 
 void Bullet::Update()
@@ -16,48 +28,36 @@ void Bullet::Update()
     // 移動
     m_pos = VAdd(m_pos, m_vel);
 
-    // 壁との当たり判定
-    VECTOR normal;
-    if (CheckHitWall(normal))
-    {
-        Reflect(normal);
-    }
+    CheckWallCollision();
+
+    // 弾の位置更新
+    MV1SetPosition(Bullet_m_handle, m_pos);
+
 }
 
 void Bullet::Draw()
 {
     if (!m_alive) return;
 
-    printfDx("Bullet Draw Pos:(%.2f, %.2f, %.2f)\n",
-        m_pos.x, m_pos.y, m_pos.z);
+    // モデルの表示
+    MV1DrawModel(Bullet_m_handle);
 
-    // 仮で丸
-    DrawSphere3D(
-        m_pos,
-        //m_radius,
-        10,
-        8,
-        GetColor(255, 255, 0),
-        GetColor(255, 255, 0),
-        TRUE
-    );
+    // デバッグ用表示
+    {
+        printfDx("Bullet Draw Pos:(%.2f, %.2f, %.2f)\n",
+            m_pos.x, m_pos.y, m_pos.z);
+    }
+
 }
 
-void Bullet::Fire(const VECTOR& startPos, float angle)
+void Bullet::CheckWallCollision()
 {
-    m_pos = startPos;
+    VECTOR hitNormal;
 
-    // X-Z平面方向
-    VECTOR dir = VGet(
-        cosf(angle),
-        0.0f,
-        sinf(angle)
-    );
+    if (!CheckHitWall(hitNormal))
+        return;
 
-    m_vel = VScale(dir, 10.0f); // 弾速
-    m_radius = 5.0f;
-    m_reflect = 2;              // 反射2回
-    m_alive = true;
+    Reflect(hitNormal);
 }
 
 bool Bullet::CheckHitWall(VECTOR& outNormal)
@@ -68,28 +68,17 @@ bool Bullet::CheckHitWall(VECTOR& outNormal)
         outNormal = VGet(1.0f, 0.0f, 0.0f);
         return true;
     }
-    if (m_pos.x > 1000.0f)
+    if (m_pos.x > 100.0f)
     {
         outNormal = VGet(-1.0f, 0.0f, 0.0f);
         return true;
     }
-    // Z方向の壁
-    if (m_pos.z < 0.0f)
-    {
-        outNormal = VGet(0.0f, 0.0f, 1.0f);
-        return true;
-    }
-    if (m_pos.z > 1000.0f)
-    {
-        outNormal = VGet(0.0f, 0.0f, -1.0f);
-        return true;
-    }
-
     return false;
 }
 
 void Bullet::Reflect(const VECTOR& normal)
 {
+    // 反射が終えたら消える
     if (m_reflect <= 0)
     {
         m_alive = false;
