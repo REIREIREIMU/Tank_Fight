@@ -85,9 +85,9 @@ void Player::Update()
 
 	// ’e”­ŽË
 	static bool prevShot = false;
-	bool nowShot = CheckHitKey(KEY_INPUT_SPACE);
+	bool nowShot = GetMouseInput();
 
-	if (nowShot && !prevShot)
+	if ((nowShot & MOUSE_INPUT_LEFT) && !(prevShot & MOUSE_INPUT_LEFT))
 	{
 		Shoot();
 	}
@@ -165,7 +165,7 @@ void Player::Shoot()
 	);
 
 	bullets.push_back(
-		std::make_unique<Bullet>(muzzlePos, shotDir)
+		std::make_unique<Bullet>(muzzlePos, shotDir, object)
 	);
 }
 

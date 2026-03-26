@@ -48,8 +48,8 @@ void Object::Draw()
 				pos_x = x * Ground_Size;
 				pos_z = z * Ground_Size;
 
-				MV1SetPosition(Ground_m_handle, VGet(pos_x, pos_y, pos_z));
-				MV1DrawModel(Ground_m_handle);
+				//MV1SetPosition(Ground_m_handle, VGet(pos_x, pos_y, pos_z));
+				//MV1DrawModel(Ground_m_handle);
 			}
 		}
 	}

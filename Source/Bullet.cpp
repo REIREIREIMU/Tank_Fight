@@ -1,7 +1,9 @@
 #include "Bullet.h"
+#include "Object.h"
 
-Bullet::Bullet(const VECTOR& startPos, const VECTOR& dir):
-    Bullet_m_handle(-1)
+Bullet::Bullet
+(const VECTOR& startPos, const VECTOR& dir, Object* obj)
+    : object(obj), Bullet_m_handle(-1)
 {
     // 3Dƒ‚ƒfƒ‹‚Ì“Ç‚Ýž‚Ý
     Bullet_m_handle = MV1LoadModel("Assets/Bullet.mv1");
@@ -18,7 +20,7 @@ Bullet::Bullet(const VECTOR& startPos, const VECTOR& dir):
 
 Bullet::~Bullet()
 {
-        MV1DeleteModel(Bullet_m_handle);
+    MV1DeleteModel(Bullet_m_handle);
 }
 
 void Bullet::Update()
@@ -56,49 +58,38 @@ void Bullet::Draw()
 
 void Bullet::CheckWallCollision()
 {
-    VECTOR hitNormal;
+    if (!object) return;
 
-    if (!CheckHitWall(hitNormal))
+    VECTOR nextPos = VAdd(m_pos, m_vel);
+
+    // ‚Ü‚¸ X •ûŒü‚¾‚¯“®‚©‚µ‚Ä”»’è
+    if (object->CheckHit(nextPos.x, m_pos.z))
+    {
+        VECTOR normal = VGet(
+            (m_vel.x > 0.0f) ? -1.0f : 1.0f,
+            0.0f,
+            0.0f
+        );
+        Reflect(normal);
         return;
+    }
 
-    Reflect(hitNormal);
+    // ŽŸ‚É Z •ûŒü
+    if (object->CheckHit(m_pos.x, nextPos.z))
+    {
+        VECTOR normal = VGet(
+            0.0f,
+            0.0f,
+            (m_vel.z > 0.0f) ? -1.0f : 1.0f
+        );
+        Reflect(normal);
+        return;
+    }
 }
 
 bool Bullet::CheckHitWall(VECTOR& outNormal)
 {
-    const float MIN_X = 0.0f;
-    const float MAX_X = 100.0f;
-    const float MIN_Z = 0.0f;
-    const float MAX_Z = 100.0f;
-
-    // X•ûŒü‚Ì•Ç
-    if (m_pos.x < MIN_X)
-    {
-        outNormal = VGet(1, 0, 0);
-        m_pos.x = MIN_X;
-        return true;
-    }
-    if (m_pos.x > MAX_X)
-    {
-        outNormal = VGet(-1, 0, 0);
-        m_pos.x = MAX_X;
-        return true;
-    }
-    // Z•ûŒü‚Ì•Ç
-    if (m_pos.z < MIN_Z)
-    {
-        outNormal = VGet(0, 0, 1);
-        m_pos.z = MIN_Z;
-        return true;
-    }
-    if (m_pos.z > MAX_Z)
-    {
-        outNormal = VGet(0, 0, -1);
-        m_pos.z = MAX_Z;
-        return true;
-    }
     return false;
-
 }
 
 void Bullet::Reflect(const VECTOR& normal)

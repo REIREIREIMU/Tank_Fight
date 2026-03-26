@@ -1,9 +1,11 @@
 #pragma once
 #include "../Library/GameObject.h"
 
+class Object;
+
 class Bullet : public GameObject {
 public:
-	Bullet(const VECTOR& startPos, const VECTOR& dir);
+	Bullet(const VECTOR& startPos, const VECTOR& dir, Object* obj);
     ~Bullet();
 
     void Update()override;
@@ -25,4 +27,7 @@ private:
 
     // ”½Ëˆ—
     void Reflect(const VECTOR& normal);
+
+    // “–‚½‚è”»’è—pi•Çj
+    Object* object;
 };
