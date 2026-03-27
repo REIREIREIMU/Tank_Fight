@@ -1,6 +1,7 @@
 #include "PlayScene.h"
 #include "Camera.h"
 #include "Player.h"
+#include "Enemy.h"
 #include "Object.h"
 
 PlayScene::PlayScene()
@@ -8,16 +9,15 @@ PlayScene::PlayScene()
     camera = new Camera();        //cameraの初期化
     object = new Object();        //objectの初期化
     player = new Player(object);  //playerの初期化
+
+    enemy = new Enemy(VGet(3.0f, 0.0f, 3.0f));
 }
 
 PlayScene::~PlayScene()
 {
-    delete camera;
-    delete player;
-    delete object;
-
     camera = nullptr;
     player = nullptr;
+    enemy  = nullptr;
     object = nullptr;
 }
 
@@ -25,19 +25,24 @@ void PlayScene::Update()
 {
    if (CheckHitKey(KEY_INPUT_G)) {
        SceneManager::ChangeScene("GAME OVER");
+       return;
    }
    else if (CheckHitKey(KEY_INPUT_C)) {
        SceneManager::ChangeScene("CLEAR");
+       return;
    }
 
    // 各自Update
    camera->Update();
    player->Update();
+   enemy ->Update();
    object->Update();
 }
 
 void PlayScene::Draw()
 {
+    if (!camera || !player || !enemy || !object) return;
+
     // グリット線表示(デバック用)
     for (int i = -Grid_Half; i <= Grid_Half; i++)
     {
@@ -66,5 +71,6 @@ void PlayScene::Draw()
    DrawString(100, 500, "Push [C]Key To Clear", GetColor(255, 255, 255));
 
    player->Draw();  // プレイヤーのモデルを表示
+   enemy ->Draw();  // 敵のモデルを表示
    object->Draw();  // ブロック系統のモデルを表示
 }

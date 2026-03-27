@@ -2,10 +2,17 @@
 #include "Object.h"
 #include "Player.h"
 #include "Config.h"
+#include <cmath>
 
 Bullet::Bullet
-(const VECTOR& startPos, const VECTOR& dir, Object* obj, Player* player)
-    : object(obj), player(player), m_reflect(2), Bullet_m_handle(-1)
+(const VECTOR& startPos, const VECTOR& dir, Object* obj, Player* ownerPlayer)
+    : m_pos(startPos),
+    m_alive(true),
+    m_trailGrowing(true),
+    object(obj), 
+    owner(ownerPlayer),
+    m_reflect(2),
+    Bullet_m_handle(-1)
 {
     // 3Dモデルの読み込み
     Bullet_m_handle = MV1LoadModel("Assets/Bullet.mv1");
@@ -35,15 +42,15 @@ void Bullet::Update()
         m_pos = VAdd(m_pos, m_vel);
 
         // プレイヤーとの当たり判定
-        if (player && player->IsAlive())
+        if(owner && owner->IsAlive())
         {
-            VECTOR p = player->GetPosition();
+            VECTOR p = owner->GetPosition();
 
             if (fabs(m_pos.x - p.x) < (Config::Bullet_Half + Config::Player_Half) &&
                 fabs(m_pos.z - p.z) < (Config::Bullet_Half + Config::Player_Half))
             {
                 // プレイヤー消滅
-                player->IsDead();
+                owner->IsDead();
 
                 // 弾も消す
                 m_alive = false;
@@ -62,6 +69,7 @@ void Bullet::Update()
             }
         }
 
+        // 壁との当たり判定
         CheckWallCollision();
 
         // 向き計算

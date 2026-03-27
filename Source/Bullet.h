@@ -7,7 +7,13 @@ class Player;
 
 class Bullet : public GameObject {
 public:
-    Bullet(const VECTOR& startPos, const VECTOR& dir, Object* obj, Player* player);
+    Bullet(
+        const VECTOR& startPos, 
+        const VECTOR& dir,
+        Object* obj,
+        Player* owner
+    );
+
     ~Bullet();
 
     void Update()override;
@@ -39,5 +45,5 @@ private:
 
     // 当たり判定用（壁）
     Object* object;     // Objectのポインタを作成
-    Player* player;     // Playerのポインタを作成
+    Player* owner;      // Playerのポインタを作成
 };

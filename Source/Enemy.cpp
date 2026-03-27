@@ -1,24 +1,27 @@
-// Enemy.cpp
 #include "Enemy.h"
-#include "Object.h"
-#include "Player.h"
-#include "Config.h"
 
-Enemy::Enemy(const VECTOR& spawnPos, Object* obj, Player* pl)
-    : object(obj), player(pl), m_alive(true)
+Enemy::Enemy(const VECTOR& spawnPos)
+    : Body_m_handle(-1),
+    Head_m_handle(-1),
+    pos_x(spawnPos.x),
+    pos_y1(DX_PI_F),
+    pos_y2(0.0f),
+    pos_z(spawnPos.z)
 {
-    pos_x = spawnPos.x;
-    pos_z = spawnPos.z;
-    body_y = 0.0f;
-    head_y = 0.0f;
-
+    // モデル読み込み（Playerと同じ）
     Body_m_handle = MV1LoadModel("Assets/Player_Tank_Body.mv1");
     Head_m_handle = MV1LoadModel("Assets/Player_Tank_Head.mv1");
 
+    // 位置・回転初期化
     Position = VGet(pos_x, 0.0f, pos_z);
+    Body_Rotation = VGet(0.0f, pos_y1, 0.0f);
+    Head_Rotation = VGet(0.0f, pos_y2, 0.0f);
 
     MV1SetPosition(Body_m_handle, Position);
+    MV1SetRotationXYZ(Body_m_handle, Body_Rotation);
+
     MV1SetPosition(Head_m_handle, Position);
+    MV1SetRotationXYZ(Head_m_handle, Head_Rotation);
 }
 
 Enemy::~Enemy()
@@ -29,58 +32,11 @@ Enemy::~Enemy()
 
 void Enemy::Update()
 {
-    if (!m_alive) return;
-    if (!player || !player->IsAlive()) return;
-
-    // ===== プレイヤー方向 =====
-    VECTOR p = player->GetPosition();
-    VECTOR dir;
-    dir.x = p.x - pos_x;
-    dir.z = p.z - pos_z;
-
-    float len = sqrtf(dir.x * dir.x + dir.z * dir.z);
-    if (len > 0.001f)
-    {
-        dir.x /= len;
-        dir.z /= len;
-
-        // 移動
-        float next_x = pos_x + dir.x * Speed;
-        float next_z = pos_z + dir.z * Speed;
-
-        if (!object->CheckHit(next_x, pos_z, Enemy_Half))
-            pos_x = next_x;
-
-        if (!object->CheckHit(pos_x, next_z, Enemy_Half))
-            pos_z = next_z;
-
-        // 車体回転
-        body_y = atan2f(dir.x, dir.z) + DX_PI_F;
-
-        // 砲塔は常にプレイヤーを向く
-        head_y = body_y;
-    }
-
-    // 更新反映
-    Position = VGet(pos_x, 0.0f, pos_z);
-    Body_Rotation = VGet(0.0f, body_y, 0.0f);
-    Head_Rotation = VGet(0.0f, head_y, 0.0f);
-
-    MV1SetPosition(Body_m_handle, Position);
-    MV1SetRotationXYZ(Body_m_handle, Body_Rotation);
-
-    MV1SetPosition(Head_m_handle, Position);
-    MV1SetRotationXYZ(Head_m_handle, Head_Rotation);
+    // 今回は何もしない（表示確認用）
 }
 
 void Enemy::Draw()
 {
-    if (!m_alive) return;
     MV1DrawModel(Body_m_handle);
     MV1DrawModel(Head_m_handle);
-}
-
-void Enemy::Kill()
-{
-    m_alive = false;
 }

@@ -3,6 +3,7 @@
 
 class Camera;
 class Player;
+class Enemy;
 class Object;
 
 class PlayScene : public SceneBase
@@ -17,6 +18,7 @@ private:
 	Camera* camera = nullptr;		// Cameraのポインタを作成
 	Player* player = nullptr;		// Playerのポインタを作成
 	Object* object = nullptr;		// Objectのポインタを作成
+	Enemy*  enemy  = nullptr;		// Enemyのポインタを作成
 
 	// ディバック用グリット線
 	const int   Grid_Half =   50;	// グリット線を表示する範囲
