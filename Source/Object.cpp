@@ -1,4 +1,5 @@
 #include "Object.h"
+#include "Enemy.h"
 #include "Config.h"
 #include <cmath>
 
@@ -127,6 +128,36 @@ bool Object::GetPlayerSpawnPos(VECTOR& outPos)
 		}
 	}
 	return false;
+}
+
+void Object::GetEnemySpawnPos(std::vector<Enemy*>& outEnemies, Player* player)
+{
+	for (int z = 0; z < Map_pos.z; z++)
+	{
+		for (int x = 0; x < Map_pos.x; x++)
+		{
+			int v = mapData[z][x];
+
+			VECTOR pos = VGet(
+				(x + 0.5f - Map_pos.x * 0.5f) * Ground_Size,
+				0.0f,
+				-(z + 0.5f - Map_pos.z * 0.5f) * Ground_Size
+			);
+
+			if (v == 2)
+			{
+				outEnemies.push_back(
+					new Enemy(pos, EnemyType::Turret, this, player)
+				);
+			}
+			else if (v == 3)
+			{
+				outEnemies.push_back(
+					new Enemy(pos, EnemyType::Chaser, this, player)
+				);
+			}
+		}
+	}
 }
 
 void Object::LoadCSV(const char* filename)

@@ -4,6 +4,9 @@
 #include <sstream>
 #include <vector>
 
+class Enemy;
+class Player;
+
 class Object : public GameObject {
 public:
 	Object();
@@ -16,6 +19,9 @@ public:
 
 	// プレイヤー初期位置取得
 	bool GetPlayerSpawnPos(VECTOR& outPos);
+
+	void GetEnemySpawnPos(std::vector<Enemy*>& outEnemies,
+		Player* player);
 
 private:
 	int	Ground_m_handle; // 地面のハンドル

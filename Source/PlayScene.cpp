@@ -10,14 +10,14 @@ PlayScene::PlayScene()
     object = new Object();        //objectの初期化
     player = new Player(object);  //playerの初期化
 
-    enemy = new Enemy(VGet(3.0f, 0.0f, 3.0f));
+    object->GetEnemySpawnPos(enemies, player);
 }
 
 PlayScene::~PlayScene()
 {
     camera = nullptr;
     player = nullptr;
-    enemy  = nullptr;
+    //e  = nullptr;
     object = nullptr;
 }
 
@@ -35,13 +35,14 @@ void PlayScene::Update()
    // 各自Update
    camera->Update();
    player->Update();
-   enemy ->Update();
+   for (auto e : enemies)
+       e->Update();
    object->Update();
 }
 
 void PlayScene::Draw()
 {
-    if (!camera || !player || !enemy || !object) return;
+    if (!camera || !player || !object) return;
 
     // グリット線表示(デバック用)
     for (int i = -Grid_Half; i <= Grid_Half; i++)
@@ -71,6 +72,7 @@ void PlayScene::Draw()
    DrawString(100, 500, "Push [C]Key To Clear", GetColor(255, 255, 255));
 
    player->Draw();  // プレイヤーのモデルを表示
-   enemy ->Draw();  // 敵のモデルを表示
+   for (auto e : enemies)
+       e->Draw();   // 敵のモデルを表示
    object->Draw();  // ブロック系統のモデルを表示
 }
