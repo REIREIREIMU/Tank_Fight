@@ -2,6 +2,7 @@
 #include "../Library/SceneBase.h"
 #include "Camera.h"
 #include "Player.h"
+#include "Enemy.h"
 #include "Object.h"
 
 class PlayScene : public SceneBase
@@ -16,6 +17,8 @@ private:
 	Camera* camera;		// Cameraのポインタを作成
 	Player* player;		// Playerのポインタを作成
 	Object* object;		// Objectのポインタを作成
+
+	std::vector<std::unique_ptr<Enemy>> enemies;
 
 	// ディバック用グリット線
 	const int   Grid_Half =   50;	// グリット線を表示する範囲

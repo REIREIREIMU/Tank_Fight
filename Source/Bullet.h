@@ -1,13 +1,20 @@
 #pragma once
 #include "../Library/GameObject.h"
 #include <vector>
+#include <memory>
 
 class Object;
 class Player;
+class Enemy;
 
 class Bullet : public GameObject {
 public:
-    Bullet(const VECTOR& startPos, const VECTOR& dir, Object* obj, Player* player);
+    Bullet(
+        const VECTOR& startPos,
+        const VECTOR& dir, 
+        Object* obj, Player* player,
+        std::vector<std::unique_ptr<Enemy>>* enemies
+    );
     ~Bullet();
 
     void Update()override;
@@ -26,7 +33,6 @@ private:
 
     // 壁との当たり判定
     void CheckWallCollision();
-    bool CheckHitWall(VECTOR& outNormal);
 
     // 反射処理
     void Reflect(const VECTOR& normal);
@@ -40,4 +46,6 @@ private:
     // 当たり判定用（壁）
     Object* object;     // Objectのポインタを作成
     Player* player;     // Playerのポインタを作成
+
+    std::vector<std::unique_ptr<Enemy>>* enemies;
 };

@@ -4,7 +4,23 @@ PlayScene::PlayScene()
 {
     camera = new Camera();        //cameraの初期化
     object = new Object();        //objectの初期化
-    player = new Player(object);  //playerの初期化
+ 
+    std::vector<VECTOR> enemyPos;
+    object->GetEnemySpawnPos(enemyPos);
+
+    for (auto& pos : enemyPos)
+    {
+        enemies.push_back(
+            std::make_unique<Enemy>(pos, object, nullptr)
+        );
+    }
+
+    player = new Player(object, &enemies);  //playerの初期化
+
+    for (auto& e : enemies)
+    {
+        e->SetPlayer(player);
+    }
 }
 
 PlayScene::~PlayScene()
@@ -23,6 +39,7 @@ void PlayScene::Update()
    // 各自Update
    camera->Update();
    player->Update();
+   for (auto& e : enemies) e->Update();
    object->Update();
 }
 
@@ -56,5 +73,6 @@ void PlayScene::Draw()
    DrawString(100, 500, "Push [C]Key To Clear", GetColor(255, 255, 255));
 
    player->Draw();  // プレイヤーのモデルを表示
+   for (auto& e : enemies) e->Draw();
    object->Draw();  // ブロック系統のモデルを表示
 }

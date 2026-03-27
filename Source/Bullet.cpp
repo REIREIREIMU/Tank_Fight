@@ -1,18 +1,21 @@
 #include "Bullet.h"
 #include "Object.h"
 #include "Player.h"
+#include "Enemy.h"
 #include "Config.h"
+#include <cmath>
 
-Bullet::Bullet
-(const VECTOR& startPos, const VECTOR& dir, Object* obj, Player* player)
-    : object(obj), player(player), m_reflect(2), Bullet_m_handle(-1)
+Bullet::Bullet(const VECTOR& startPos, 
+    const VECTOR& dir, Object* obj, 
+    Player* player, std::vector<std::unique_ptr<Enemy>>* enemies)
+    : object(obj), player(player), enemies(enemies), m_reflect(2)
 {
     // 3DÉÇÉfÉãÇÃì«Ç›çûÇ›
     Bullet_m_handle = MV1LoadModel("Assets/Bullet.mv1");
 
-    m_pos          = startPos;
-    m_vel          = VScale(VNorm(dir), 0.025f);
-    m_alive        = true;
+    m_pos = startPos;
+    m_vel = VScale(VNorm(dir), 0.025f);
+    m_alive = true;
     m_trailGrowing = true;
 
     // ç≈èâÇÃà íuÇãLò^
@@ -20,7 +23,6 @@ Bullet::Bullet
 
     // èâä˙à íuê›íË
     MV1SetPosition(Bullet_m_handle, m_pos);
-
 }
 
 Bullet::~Bullet()
@@ -48,6 +50,25 @@ void Bullet::Update()
                 // íeÇ‡è¡Ç∑
                 m_alive = false;
                 return;
+            }
+        }
+        if (enemies)
+        {
+            for (auto& e : *enemies)
+            {
+                if (!e->IsAlive()) continue;
+
+                VECTOR ep = e->GetPosition();
+                if (fabs(m_pos.x - ep.x) < (Config::Bullet_Half + Config::Enemy_Half) &&
+                    fabs(m_pos.z - ep.z) < (Config::Bullet_Half + Config::Enemy_Half))
+                {
+                    // ìGè¡ñ≈
+                    e->IsDead();
+
+                    // íeÇ‡è¡Ç∑
+                    m_alive = false;
+                    return;
+                }
             }
         }
 
@@ -139,11 +160,6 @@ void Bullet::CheckWallCollision()
         Reflect(normal);
         return;
     }
-}
-
-bool Bullet::CheckHitWall(VECTOR& outNormal)
-{
-    return false;
 }
 
 void Bullet::Reflect(const VECTOR& normal)
