@@ -1,8 +1,9 @@
 #pragma once
 #include "../Library/SceneBase.h"
-#include "Camera.h"
-#include "Player.h"
-#include "Object.h"
+
+class Camera;
+class Player;
+class Object;
 
 class PlayScene : public SceneBase
 {
@@ -13,9 +14,9 @@ public:
 	void Update() override;
 	void Draw() override;
 private:
-	Camera* camera;		// Cameraのポインタを作成
-	Player* player;		// Playerのポインタを作成
-	Object* object;		// Objectのポインタを作成
+	Camera* camera = nullptr;		// Cameraのポインタを作成
+	Player* player = nullptr;		// Playerのポインタを作成
+	Object* object = nullptr;		// Objectのポインタを作成
 
 	// ディバック用グリット線
 	const int   Grid_Half =   50;	// グリット線を表示する範囲

@@ -1,4 +1,7 @@
 #include "PlayScene.h"
+#include "Camera.h"
+#include "Player.h"
+#include "Object.h"
 
 PlayScene::PlayScene()
 {
@@ -9,6 +12,13 @@ PlayScene::PlayScene()
 
 PlayScene::~PlayScene()
 {
+    delete camera;
+    delete player;
+    delete object;
+
+    camera = nullptr;
+    player = nullptr;
+    object = nullptr;
 }
 
 void PlayScene::Update()
