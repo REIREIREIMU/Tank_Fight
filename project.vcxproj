@@ -160,7 +160,6 @@
     <ClInclude Include="Source\Camera.h" />
     <ClInclude Include="Source\ClearScene.h" />
     <ClInclude Include="Source\Config.h" />
-    <ClInclude Include="Source\Enemy.h" />
     <ClInclude Include="Source\GameOverScene.h" />
     <ClInclude Include="Source\Object.h" />
     <ClInclude Include="Source\Player.h" />
@@ -187,7 +186,6 @@
     <ClCompile Include="Source\Bullet.cpp" />
     <ClCompile Include="Source\Camera.cpp" />
     <ClCompile Include="Source\ClearScene.cpp" />
-    <ClCompile Include="Source\Enemy.cpp" />
     <ClCompile Include="Source\GameOverScene.cpp" />
     <ClCompile Include="Source\Object.cpp" />
     <ClCompile Include="Source\Player.cpp" />

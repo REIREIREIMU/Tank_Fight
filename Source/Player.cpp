@@ -6,7 +6,7 @@
 static const float Speed  = 0.025f;		// ˆÚ“®‘¬“x
 static const float Angle  = 0.020f;		// ŽÔ‘Ì‚ÌˆÚ“]‘¬“x
 
-Player::Player(Object* obj, std::vector<std::unique_ptr<Enemy>>* enemies) :
+Player::Player(Object* obj) :
 	m_alive(true),
 	m_Exploding(false),
 	m_Explosion_Handle(-1),
@@ -17,8 +17,7 @@ Player::Player(Object* obj, std::vector<std::unique_ptr<Enemy>>* enemies) :
 	pos_y1(DX_PI_F), 
 	pos_y2(0.0f),
 	pos_z(0.0f), 
-	object(obj),
-	enemies(enemies)
+	object(obj)
 {
 	VECTOR spawnPos;
 
@@ -233,7 +232,7 @@ void Player::Shoot()
 	);
 
 	bullets.push_back(
-		std::make_unique<Bullet>(muzzlePos, shotDir, object, this, enemies)
+		std::make_unique<Bullet>(muzzlePos, shotDir, object, this)
 	);
 }
 

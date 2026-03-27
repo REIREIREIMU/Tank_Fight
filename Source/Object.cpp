@@ -129,24 +129,6 @@ bool Object::GetPlayerSpawnPos(VECTOR& outPos)
 	return false;
 }
 
-void Object::GetEnemySpawnPos(std::vector<VECTOR>& outPos)
-{
-	outPos.clear();
-
-	for (int z = 0; z < Map_pos.z; z++)
-	{
-		for (int x = 0; x < Map_pos.x; x++)
-		{
-			if (mapData[z][x] == 2)
-			{
-				float ex = (x + 0.5f - Map_pos.x * 0.5f) * Ground_Size;
-				float ez = -(z + 0.5f - Map_pos.z * 0.5f) * Ground_Size;
-				outPos.push_back(VGet(ex, 0.0f, ez));
-			}
-		}
-	}
-}
-
 void Object::LoadCSV(const char* filename)
 {
 	std::ifstream file(filename);

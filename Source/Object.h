@@ -17,9 +17,6 @@ public:
 	// プレイヤー初期位置取得
 	bool GetPlayerSpawnPos(VECTOR& outPos);
 
-	// 敵初期位置をすべて取得（複数対応）
-	void GetEnemySpawnPos(std::vector<VECTOR>& outPos);
-
 private:
 	int	Ground_m_handle; // 地面のハンドル
 	int	Block_m_handle;	 // ブロックのハンドル

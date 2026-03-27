@@ -9,7 +9,7 @@ class Object;
 
 class Player : public GameObject {
 public:
-	Player(Object* object, std::vector<std::unique_ptr<Enemy>>* enemies);
+	Player(Object* object);
 	~Player();
 
 	void Update() override;
@@ -63,6 +63,12 @@ private:
 	// マウスポインター用ベクター
 	VECTOR GetMouseWorldPos();
 
-	// Enemy 参照(複数)
-	std::vector<std::unique_ptr<Enemy>>* enemies;
+	/*enum Dir {
+		Front = 0,
+		Left,
+		Back,
+		Right,
+	};
+	Dir direction;
+	int counter;*/
 };
