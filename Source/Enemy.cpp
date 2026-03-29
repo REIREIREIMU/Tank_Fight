@@ -4,7 +4,7 @@
 #include "Config.h"
 #include <cmath>
 
-static const float Speed = 0.015f;		// ˆÚ“®‘¬“x
+static const float Speed = 0.012f;		// ˆÚ“®‘¬“x
 static const float Angle = 0.020f;		// ŽÔ‘Ì‚ÌˆÚ“]‘¬“x
 
 Enemy::Enemy(const VECTOR& spawnPos, EnemyType type, Object* object, Player* player) :
@@ -165,11 +165,10 @@ void Enemy::UpdateChaser()
 	pos_y2 = atan2f(toPlayer.x, toPlayer.z) + DX_PI_F;
 
 	VECTOR dir = VNorm(toPlayer);
+	VECTOR moveDir = VGet(0, 0, 0);
 
 	const float ApproachDistance = 8.0f; // Ú‹ß‹——£
 	const float OrbitDistance	 = 5.0f; // ‰ñ‚èž‚Ý‹——£
-
-	VECTOR moveDir = VGet(0, 0, 0);
 
 	// ‹——£‚ª—£‚ê‚·‚¬‚Ä‚¢‚½‚ç‹ß‚Ã‚­
 	if (dist > ApproachDistance)
@@ -184,7 +183,14 @@ void Enemy::UpdateChaser()
 	else
 	{
 		VECTOR left = VGet(-dir.z, 0.0f, dir.x);
-		moveDir = left;
+		moveDir = VAdd(dir, left);
+	}
+
+	// ŽÔ‘Ì‚ÌŒü‚«‚ðˆÚ“®•ûŒü‚É‡‚í‚¹‚é
+	if (VSize(moveDir) > 0.001f)
+	{
+		float target = atan2f(moveDir.x, moveDir.z) + DX_PI_F;
+		pos_y1 += (target - pos_y1) * 0.01f;
 	}
 
 	// •Ç”»’è‚Â‚«ˆÚ“®

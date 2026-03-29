@@ -65,5 +65,5 @@ private:
 	//static constexpr int Max_Player_Bullets = 9;
 
 	int shootTimer;	// 発射タイマー
-	static constexpr int ShootInterval = 300;
+	static constexpr int ShootInterval = 600;
 };
