@@ -69,10 +69,29 @@ void Enemy::Update()
 		shootTimer++;
 
 		// 弾発射
-		if (type == EnemyType::Turret && shootTimer >= ShootInterval)
+		if (shootTimer >= ShootInterval)
 		{
-			Shoot();
-			shootTimer = 0;
+			if (type == EnemyType::Turret){
+				Shoot();
+				shootTimer = 0;
+			}
+			if (type == EnemyType::Chaser) {
+
+				VECTOR enemyPos = Position;
+				VECTOR playerPos = player->GetPosition();
+
+				bool hasWall = object->HasWallBetween(
+					enemyPos,
+					playerPos,
+					Config::Bullet_Half
+				);
+
+				if (!hasWall)
+				{
+					Shoot();
+					shootTimer = 0;
+				}
+			}
 		}
 
 		// 弾更新
@@ -211,11 +230,6 @@ void Enemy::Shoot()
 	// 死亡したら何もできない
 	if (!m_alive) return;
 
-	// プレイヤーの弾が 3発ステージ上に存在している限り撃てない
-	/*if (CountAliveBullets() >= Max_Player_Bullets) {
-		return;
-	}*/
-
 	VECTOR shotDir;
 	shotDir.x = -sinf(pos_y2);
 	shotDir.y = 0.0f;
@@ -224,9 +238,9 @@ void Enemy::Shoot()
 
 	const float MuzzleOffset = 0.8f; // 砲身の長さ（弾の発射位置）
 	VECTOR muzzlePos = VGet(
-		pos_x + shotDir.x * MuzzleOffset,
+		Position.x + shotDir.x * MuzzleOffset,
 		0.4f,
-		pos_z + shotDir.z * MuzzleOffset
+		Position.z + shotDir.z * MuzzleOffset
 	);
 
 	bullets.push_back(

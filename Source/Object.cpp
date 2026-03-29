@@ -160,6 +160,29 @@ void Object::GetEnemySpawnPos(std::vector<Enemy*>& outEnemies, Player* player)
 	}
 }
 
+bool Object::HasWallBetween(const VECTOR& from, const VECTOR& to, float radius)
+{
+	VECTOR dir = VSub(to, from);
+	float length = VSize(dir);
+	dir = VNorm(dir);
+
+	const float step = Ground_Size * 0.25f; // ”»’èŠÔŠu
+	int steps = static_cast<int>(length / step);
+
+	VECTOR pos = from;
+
+	for (int i = 0; i < steps; i++)
+	{
+		pos = VAdd(pos, VScale(dir, step));
+
+		if (CheckHit(pos.x, pos.z, radius))
+		{
+			return true; // •Ç‚ª‚ ‚é
+		}
+	}
+	return false;
+}
+
 void Object::LoadCSV(const char* filename)
 {
 	std::ifstream file(filename);

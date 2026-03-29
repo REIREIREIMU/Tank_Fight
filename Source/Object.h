@@ -24,6 +24,9 @@ public:
 	void GetEnemySpawnPos(std::vector<Enemy*>& outEnemies,
 		Player* player);
 
+	// プレイヤーと敵の間に壁があるかどうかの関数
+	bool HasWallBetween(const VECTOR& from, const VECTOR& to, float radius);
+
 private:
 	int	Ground_m_handle; // 地面のハンドル
 	int	Block_m_handle;	 // ブロックのハンドル
