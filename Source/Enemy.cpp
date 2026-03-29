@@ -29,7 +29,6 @@ Enemy::Enemy(const VECTOR& spawnPos, EnemyType type, Object* object, Player* pla
 	Head_m_handle = MV1LoadModel("Assets/Enemy_Tank_A(Head).mv1");
 
 	// ˆÊ’uŠÇ—
-	Position = VGet(pos_x, 0.0f, pos_z);
 	Body_Rotation = VGet(0.0f, pos_y1, 0.0f); // Ô‘Ì—p‰ñ“]
 	Head_Rotation = VGet(0.0f, pos_y2, 0.0f); // –C“ƒ—p‰ñ“]
 
@@ -152,8 +151,6 @@ void Enemy::UpdateTurret()
 	pos_y2 = atan2f(dir.x, dir.z) + DX_PI_F;
 	
 	// Ô‘Ì‚Í“®‚©‚È‚¢
-	Position = VGet(pos_x, 0.0f, pos_z);
-
 	Body_Rotation = VGet(0.0f, pos_y1, 0.0f); // Ô‘Ì—p‰ñ“]
 	Head_Rotation = VGet(0.0f, pos_y2, 0.0f); // –C“ƒ—p‰ñ“]
 }
