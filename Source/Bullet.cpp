@@ -20,7 +20,7 @@ Bullet::Bullet
     Bullet_m_handle = MV1LoadModel("Assets/Bullet.mv1");
 
     m_pos          = startPos;
-    m_vel          = VScale(VNorm(dir), 0.025f);
+    m_vel          = VScale(VNorm(dir), 0.015f);
     m_alive        = true;
     m_trailGrowing = true;
 

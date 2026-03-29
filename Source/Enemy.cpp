@@ -4,7 +4,7 @@
 #include "Config.h"
 #include <cmath>
 
-static const float Speed = 0.012f;		// ˆÚ“®‘¬“x
+static const float Speed = 0.013f;		// ˆÚ“®‘¬“x
 static const float Angle = 0.020f;		// ŽÔ‘Ì‚ÌˆÚ“]‘¬“x
 
 Enemy::Enemy(const VECTOR& spawnPos, EnemyType type, Object* object, Player* player) :

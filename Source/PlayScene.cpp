@@ -3,6 +3,30 @@
 #include "Player.h"
 #include "Enemy.h"
 #include "Object.h"
+#include "Config.h"
+
+// ‰~“¯Žm‚ÌÕ“Ë‚ð‰ðŒˆiX-Z •½–Êj
+static void ResolveCollision(
+    VECTOR& posA, float radiusA,
+    VECTOR& posB, float radiusB
+)
+{
+    VECTOR delta = VSub(posA, posB);
+
+    float dist = sqrtf(delta.x * delta.x + delta.z * delta.z);
+    float minDist = radiusA + radiusB;
+
+    // d‚È‚Á‚Ä‚¢‚È‚¢ or ‹——£ŒvŽZ•s”\
+    if (dist >= minDist || dist < 0.0001f)
+        return;
+
+    float overlap = minDist - dist;
+    VECTOR pushDir = VNorm(delta);
+
+    // ”¼•ª‚¸‚Â‰Ÿ‚µ–ß‚·
+    posA = VAdd(posA, VScale(pushDir, overlap * 0.5f));
+    posB = VSub(posB, VScale(pushDir, overlap * 0.5f));
+}
 
 PlayScene::PlayScene()
 {
@@ -39,6 +63,47 @@ void PlayScene::Update()
    for (auto e : enemies)
        e->Update();
    object->Update();
+
+   // Õ“Ëˆ—iƒvƒŒƒCƒ„[‚Æ“Gj
+   for (Enemy* e : enemies)
+   {
+       if (!e || !e->IsAlive()) continue;
+
+       VECTOR pPos = player->GetPosition();
+       VECTOR ePos = e->GetPosition();
+
+       ResolveCollision(
+           pPos, Config::Player_Half,
+           ePos, Config::Enemy_Half
+       );
+
+       player->SetPosition(pPos);
+       e->SetPosition(ePos);
+   }
+
+   // “G‚Æ“G
+   for (size_t i = 0; i < enemies.size(); i++)
+   {
+       for (size_t j = i + 1; j < enemies.size(); j++)
+       {
+           Enemy* a = enemies[i];
+           Enemy* b = enemies[j];
+
+           if (!a || !b) continue;
+           if (!a->IsAlive() || !b->IsAlive()) continue;
+
+           VECTOR posA = a->GetPosition();
+           VECTOR posB = b->GetPosition();
+
+           ResolveCollision(
+               posA, Config::Enemy_Half,
+               posB, Config::Enemy_Half
+           );
+
+           a->SetPosition(posA);
+           b->SetPosition(posB);
+       }
+   }
 }
 
 void PlayScene::Draw()

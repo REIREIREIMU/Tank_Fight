@@ -22,6 +22,7 @@ public:
 	bool IsAlive() const { return m_alive; }
 
 	VECTOR GetPosition() const { return Position; }
+	void SetPosition(const VECTOR& pos) { Position = pos; }
 
 	// Œ»İ¶‚«‚Ä‚¢‚é’e”‚ğ”‚¦‚éŠÖ”
 	int CountAliveBullets() const;

@@ -29,6 +29,7 @@ public:
 
 	bool IsAlive() const { return m_alive; }
 	VECTOR GetPosition() const { return Position; }
+	void SetPosition(const VECTOR& pos) { Position = pos; }
 
 private:
 	EnemyType type;		// Enemy ‚Ìƒ^ƒCƒv
