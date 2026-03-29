@@ -168,14 +168,45 @@ void Enemy::UpdateChaser()
 	pos_y2 = atan2f(toPlayer.x, toPlayer.z) + DX_PI_F;
 	//pos_y1 = atan2f(toPlayer.x, toPlayer.z) + DX_PI_F;
 
-	// ˆê’è‹——£‚ð•Û‚Â
-	constexpr float KeepDistance = 5.0f;
+	VECTOR dir = VNorm(toPlayer);
+
+	const float ApproachDistance = 8.0f; // Ú‹ß‹——£
+	const float OrbitDistance	 = 5.0f; // ‰ñ‚èž‚Ý‹——£
+
+	VECTOR moveDir = VGet(0, 0, 0);
 
 	// ‹——£‚ª—£‚ê‚·‚¬‚Ä‚¢‚½‚ç‹ß‚Ã‚­
-	if (dist > KeepDistance)
+	if (dist > ApproachDistance)
 	{
-		VECTOR dir = VNorm(toPlayer);
-		Position = VAdd(Position, VScale(dir, Speed));
+		isOrbiting = false;
+		moveDir = dir;
+	}
+	else if (dist > OrbitDistance)
+	{
+		isOrbiting = false;
+		VECTOR left = VGet(-dir.z, 0.0f, dir.x);
+		moveDir = VAdd(dir, left);
+		//moveDir = VNorm(moveDir);
+	}
+	else
+	{
+		VECTOR left = VGet(-dir.z, 0.0f, dir.x);
+		moveDir = left;
+	}
+
+	// •Ç”»’è‚Â‚«ˆÚ“®
+	float nextX = Position.x + moveDir.x * Speed;
+	float nextZ = Position.z + moveDir.z * Speed;
+
+	// X•ûŒü‚Ì•Ç”»’è
+	if (!object->CheckHit(nextX, Position.z, Config::Enemy_Half))
+	{
+		Position.x = nextX;
+	}
+	// Z•ûŒü‚Ì•Ç”»’è
+	if (!object->CheckHit(Position.x, nextZ, Config::Enemy_Half))
+	{
+		Position.z = nextZ;
 	}
 
 	Body_Rotation = VGet(pos_x, pos_y1, pos_z); // ŽÔ‘Ì—p‰ñ“]

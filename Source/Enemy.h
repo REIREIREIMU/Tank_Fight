@@ -50,8 +50,8 @@ private:
 		pos_y2,	// 砲塔用 Y座標
 		pos_z;	// 敵用座標（x,y,z）
 
-	// 敵の移動量
-	//float move_x, move_z;
+	int orbitDir;       // -1:左回り, +1:右回り
+	bool isOrbiting;    // 回り込み中かどうか
 
 	// 敵用ベクター
 	VECTOR Position;		// 移動
