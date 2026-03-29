@@ -50,9 +50,6 @@ private:
 		pos_y2,	// 砲塔用 Y座標
 		pos_z;	// 敵用座標（x,y,z）
 
-	int orbitDir;       // -1:左回り, +1:右回り
-	bool isOrbiting;    // 回り込み中かどうか
-
 	// 敵用ベクター
 	VECTOR Position;		// 移動
 	VECTOR Body_Rotation,	// 回転(車体)

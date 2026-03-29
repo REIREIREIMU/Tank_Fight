@@ -166,7 +166,6 @@ void Enemy::UpdateChaser()
 
 	// ƒvƒŒƒCƒ„[‚ðŒ©‚é
 	pos_y2 = atan2f(toPlayer.x, toPlayer.z) + DX_PI_F;
-	//pos_y1 = atan2f(toPlayer.x, toPlayer.z) + DX_PI_F;
 
 	VECTOR dir = VNorm(toPlayer);
 
@@ -178,15 +177,12 @@ void Enemy::UpdateChaser()
 	// ‹——£‚ª—£‚ê‚·‚¬‚Ä‚¢‚½‚ç‹ß‚Ã‚­
 	if (dist > ApproachDistance)
 	{
-		isOrbiting = false;
 		moveDir = dir;
 	}
 	else if (dist > OrbitDistance)
 	{
-		isOrbiting = false;
 		VECTOR left = VGet(-dir.z, 0.0f, dir.x);
 		moveDir = VAdd(dir, left);
-		//moveDir = VNorm(moveDir);
 	}
 	else
 	{
