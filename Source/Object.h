@@ -20,6 +20,7 @@ public:
 	// プレイヤー初期位置取得
 	bool GetPlayerSpawnPos(VECTOR& outPos);
 
+	// 敵の初期位置取得（複数）
 	void GetEnemySpawnPos(std::vector<Enemy*>& outEnemies,
 		Player* player);
 
