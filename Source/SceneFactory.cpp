@@ -4,6 +4,7 @@
 #include "BootScene.h"
 #include "TitleScene.h"
 #include "PlayScene.h"
+#include "ReadyScene.h"
 #include "ClearScene.h"
 #include "GameOverScene.h"
 
@@ -17,6 +18,10 @@ SceneBase * SceneFactory::Create(const std::string & name)
 	if (name == "TITLE")
 	{
 		return new TitleScene();
+	}
+	if (name == "READY")
+	{
+		return new ReadyScene();
 	}
 	if (name == "PLAY")
 	{

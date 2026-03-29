@@ -71,6 +71,9 @@
     <ClCompile Include="Source\Enemy.cpp">
       <Filter>SceneManager\PlayScene</Filter>
     </ClCompile>
+    <ClCompile Include="Source\ReadyScene.cpp">
+      <Filter>SceneManager\ReadyScene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Screen.h" />
@@ -154,6 +157,9 @@
     <ClInclude Include="Source\Enemy.h">
       <Filter>SceneManager\PlayScene</Filter>
     </ClInclude>
+    <ClInclude Include="Source\ReadyScene.h">
+      <Filter>SceneManager\ReadyScene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Library">
@@ -179,6 +185,9 @@
     </Filter>
     <Filter Include="SceneManager\GameOverScene">
       <UniqueIdentifier>{2d71eb99-3ba6-4f6d-bc14-8582bd2b34e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SceneManager\ReadyScene">
+      <UniqueIdentifier>{d2aa5ce8-0c10-451e-911e-958562a5f6db}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
