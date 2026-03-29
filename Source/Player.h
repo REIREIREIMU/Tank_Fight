@@ -6,10 +6,11 @@
 #include <memory>
 
 class Object;
+class Enemy;
 
 class Player : public GameObject {
 public:
-	Player(Object* object);
+	Player(Object* object, std::vector<Enemy*>* enemies);
 	~Player();
 
 	void Update() override;
@@ -59,6 +60,7 @@ private:
 
 	// 当たり判定用（壁）
 	Object* object = nullptr;
+	std::vector<Enemy*>* enemies;
 
 	// マウスポインター用ベクター
 	VECTOR GetMouseWorldPos();

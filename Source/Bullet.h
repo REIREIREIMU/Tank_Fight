@@ -4,19 +4,21 @@
 
 class Object;
 class Player;
+class Enemy;
 
 class Bullet : public GameObject {
 public:
     Bullet(
-        const VECTOR& startPos, 
+        const VECTOR& startPos,
         const VECTOR& dir,
         Object* obj,
-        Player* owner
+        Player* owner,
+        std::vector<Enemy*>* enemies
     );
 
     ~Bullet();
 
-    void Update()override;
+    void Update() override;
     void Draw() override;
 
     bool IsAlive() const { return m_alive || !m_trail.empty(); }
@@ -30,12 +32,10 @@ private:
     bool   m_alive;        // 生存フラグ
     bool   m_trailGrowing; // 軌道生成フラグ
 
-    // 壁との当たり判定
-    void CheckWallCollision();
-    bool CheckHitWall(VECTOR& outNormal);
-
-    // 反射処理
-    void Reflect(const VECTOR& normal);
+    // 当たり判定用（壁）
+    Object* object;
+    Player* owner;
+    std::vector<Enemy*>* enemies;
 
     // 弾の軌道履歴
     std::vector<VECTOR> m_trail;
@@ -43,7 +43,9 @@ private:
     // 軌道線の残る長さ
     static constexpr int MaxTrailPoints = 60;
 
-    // 当たり判定用（壁）
-    Object* object;     // Objectのポインタを作成
-    Player* owner;      // Playerのポインタを作成
+    // 壁との当たり判定
+    void CheckWallCollision();
+
+    // 反射処理
+    void Reflect(const VECTOR& normal);
 };

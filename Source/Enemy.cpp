@@ -268,7 +268,7 @@ void Enemy::Shoot()
 	);
 
 	bullets.push_back(
-		std::make_unique<Bullet>(muzzlePos, shotDir, object, player)
+		std::make_unique<Bullet>(muzzlePos, shotDir, object, player, nullptr)
 	);
 }
 

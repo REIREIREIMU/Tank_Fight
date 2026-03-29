@@ -1,109 +1,3 @@
-//PlayScene.h
-#pragma once
-#include "../Library/SceneBase.h"
-
-class Camera;
-class Player;
-class Object;
-
-class PlayScene : public SceneBase
-{
-public:
-	PlayScene();
-	~PlayScene();
-
-	void Update() override;
-	void Draw() override;
-private:
-	Camera* camera = nullptr;		// Cameraのポインタを作成
-	Player* player = nullptr;		// Playerのポインタを作成
-	Object* object = nullptr;		// Objectのポインタを作成
-
-	// ディバック用グリット線
-	const int   Grid_Half =   50;	// グリット線を表示する範囲
-	const float Grid_Size = 1.0f;	// グリット線のサイズ
-	// 通常グリッド線の色
-	int GridColor  = GetColor(80, 80, 80);
-	// 軸の色
-	int xAxisColor = GetColor(200, 80, 80);  // X軸：赤
-	int zAxisColor = GetColor( 80, 80, 200); // Z軸：青
-};
-
-
-
-//PlayScene.cpp
-#include "PlayScene.h"
-#include "Camera.h"
-#include "Player.h"
-#include "Object.h"
-
-PlayScene::PlayScene()
-{
-    camera = new Camera();        //cameraの初期化
-    object = new Object();        //objectの初期化
-    player = new Player(object);  //playerの初期化
-}
-
-PlayScene::~PlayScene()
-{
-    delete camera;
-    delete player;
-    delete object;
-
-    camera = nullptr;
-    player = nullptr;
-    object = nullptr;
-}
-
-void PlayScene::Update()
-{
-   if (CheckHitKey(KEY_INPUT_G)) {
-       SceneManager::ChangeScene("GAME OVER");
-   }
-   else if (CheckHitKey(KEY_INPUT_C)) {
-       SceneManager::ChangeScene("CLEAR");
-   }
-
-   // 各自Update
-   camera->Update();
-   player->Update();
-   object->Update();
-}
-
-void PlayScene::Draw()
-{
-    // グリット線表示(デバック用)
-    for (int i = -Grid_Half; i <= Grid_Half; i++)
-    {
-        float pos = i * Grid_Size;
-
-        // Z方向に線表示
-        DrawLine3D(
-            VGet(pos, 0.0f, -Grid_Half * Grid_Size),
-            VGet(pos, 0.0f, Grid_Half * Grid_Size),
-            // X軸の原点のみ「赤」
-            (i == 0) ? xAxisColor : GridColor
-        );
-
-        // X方向に線表示
-        DrawLine3D(
-            VGet(-Grid_Half * Grid_Size, 0.0f, pos),
-            VGet( Grid_Half * Grid_Size, 0.0f, pos),
-            // Z軸の原点のみ「青」
-            (i == 0) ? zAxisColor : GridColor
-        );
-    }
-
-   DrawString(0, 0, "PLAY SCENE", GetColor(255, 255, 255));
-   DrawString(100, 400, "Push [G]Key To GameOverScene", GetColor(255, 255, 255));
-
-   DrawString(100, 500, "Push [C]Key To Clear", GetColor(255, 255, 255));
-
-   player->Draw();  // プレイヤーのモデルを表示
-   object->Draw();  // ブロック系統のモデルを表示
-}
-
-
 //Player.h
 #pragma once
 #include "Bullet.h"
@@ -477,6 +371,605 @@ VECTOR Player::GetMouseWorldPos()
 }
 
 
+//Bullet.h
+#pragma once
+#include "../Library/GameObject.h"
+#include <vector>
+
+class Object;
+class Player;
+
+class Bullet : public GameObject {
+public:
+    Bullet(
+        const VECTOR& startPos, 
+        const VECTOR& dir,
+        Object* obj,
+        Player* owner
+    );
+
+    ~Bullet();
+
+    void Update()override;
+    void Draw() override;
+
+    bool IsAlive() const { return m_alive || !m_trail.empty(); }
+
+private:
+    int Bullet_m_handle;   // 弾のハンドル
+
+    VECTOR m_pos;          // 弾の位置
+    VECTOR m_vel;          // 弾の速度
+    int    m_reflect;      // 弾の反射回数
+    bool   m_alive;        // 生存フラグ
+    bool   m_trailGrowing; // 軌道生成フラグ
+
+    // 壁との当たり判定
+    void CheckWallCollision();
+    bool CheckHitWall(VECTOR& outNormal);
+
+    // 反射処理
+    void Reflect(const VECTOR& normal);
+
+    // 弾の軌道履歴
+    std::vector<VECTOR> m_trail;
+
+    // 軌道線の残る長さ
+    static constexpr int MaxTrailPoints = 60;
+
+    // 当たり判定用（壁）
+    Object* object;     // Objectのポインタを作成
+    Player* owner;      // Playerのポインタを作成
+};
+
+
+//Bullet.cpp
+#include "Bullet.h"
+#include "Object.h"
+#include "Player.h"
+#include "Config.h"
+#include <cmath>
+
+Bullet::Bullet
+(const VECTOR& startPos, const VECTOR& dir, Object* obj, Player* ownerPlayer)
+    : m_pos(startPos),
+    m_alive(true),
+    m_trailGrowing(true),
+    object(obj), 
+    owner(ownerPlayer),
+    m_reflect(2),
+    Bullet_m_handle(-1)
+{
+    // 3Dモデルの読み込み
+    Bullet_m_handle = MV1LoadModel("Assets/Bullet.mv1");
+
+    m_pos          = startPos;
+    m_vel          = VScale(VNorm(dir), 0.025f);
+    m_alive        = true;
+    m_trailGrowing = true;
+
+    // 最初の位置を記録
+    m_trail.push_back(m_pos);
+
+    // 初期位置設定
+    MV1SetPosition(Bullet_m_handle, m_pos);
+
+}
+
+Bullet::~Bullet()
+{
+    MV1DeleteModel(Bullet_m_handle);
+}
+
+void Bullet::Update()
+{
+    if (m_alive) {
+        // 移動
+        m_pos = VAdd(m_pos, m_vel);
+
+        // プレイヤーとの当たり判定
+        if(owner && owner->IsAlive())
+        {
+            VECTOR p = owner->GetPosition();
+
+            if (fabs(m_pos.x - p.x) < (Config::Bullet_Half + Config::Player_Half) &&
+                fabs(m_pos.z - p.z) < (Config::Bullet_Half + Config::Player_Half))
+            {
+                // プレイヤー消滅
+                owner->IsDead();
+
+                // 弾も消す
+                m_alive = false;
+                return;
+            }
+        }
+
+        // 弾が生きている間は軌道生成
+        if (m_trailGrowing) {
+            // 軌道を保存
+            m_trail.push_back(m_pos);
+
+            // 軌道線の後ろが徐々に消える
+            if ((int)m_trail.size() > MaxTrailPoints) {
+                m_trail.erase(m_trail.begin());
+            }
+        }
+
+        // 壁との当たり判定
+        CheckWallCollision();
+
+        // 向き計算
+        float yaw = atan2f(-m_vel.x, -m_vel.z);
+        VECTOR rot = VGet(0.0f, yaw, 0.0f);
+
+        // 弾の位置更新
+        MV1SetPosition(Bullet_m_handle, m_pos);
+        MV1SetRotationXYZ(Bullet_m_handle, rot);
+    }
+    else{
+        // 軌道を生成はしない
+        m_trailGrowing = false;
+
+        // 軌道線の後ろが徐々に消える
+        if (!m_trail.empty()) {
+            m_trail.erase(m_trail.begin());
+        }
+    }
+}
+
+void Bullet::Draw()
+{
+    if (m_alive)
+    {  
+        // モデルの表示
+        MV1DrawModel(Bullet_m_handle);
+    }
+
+    // 軌道線の表示
+    for (size_t i = 1; i < m_trail.size(); i++)
+    {
+        DrawLine3D(
+            m_trail[i - 1],
+            m_trail[i],
+            GetColor(255, 255, 255)
+        );
+    }
+
+    // デバッグ用表示
+    {
+      /*  printfDx("Bullet Draw Pos:(%.2f, %.2f, %.2f)\n",
+            m_pos.x, m_pos.y, m_pos.z);*/
+
+    }
+
+}
+
+void Bullet::CheckWallCollision()
+{
+    if (!object) return;
+
+    VECTOR nextPos = VAdd(m_pos, m_vel);
+
+    // X方向
+    if (object->CheckHit(nextPos.x, m_pos.z, Config::Bullet_Half))
+    {
+        VECTOR normal = VGet(
+            (m_vel.x > 0.0f) ? -1.0f : 1.0f,
+            0.0f,
+            0.0f
+        );
+        Reflect(normal);
+        return;
+    }
+
+    // Z方向
+    if (object->CheckHit(m_pos.x, nextPos.z, Config::Bullet_Half))
+    {
+        VECTOR normal = VGet(
+            0.0f,
+            0.0f,
+            (m_vel.z > 0.0f) ? -1.0f : 1.0f
+        );
+        Reflect(normal);
+        return;
+    }
+}
+
+bool Bullet::CheckHitWall(VECTOR& outNormal)
+{
+    return false;
+}
+
+void Bullet::Reflect(const VECTOR& normal)
+{
+    // 反射が終えたら消える
+    if (m_reflect <= 0)
+    {
+        m_alive = false;
+        return;
+    }
+
+    VECTOR n = VNorm(normal);
+
+    float dot = VDot(m_vel, n);
+    m_vel = VSub(m_vel, VScale(n, 2.0f * dot));
+
+    // めり込み防止
+    m_pos = VAdd(m_pos, VScale(m_vel, 0.1f));
+
+    m_reflect--;
+}
+
+
+//Enemy.h
+#pragma once
+#include "Bullet.h"
+#include "../Library/GameObject.h"
+#include <vector>
+#include <memory>
+
+class Player;
+class Object;
+
+enum class EnemyType
+{
+	Turret,
+	Chaser
+};
+
+class Enemy : public GameObject {
+public:
+	Enemy(const VECTOR& spawnPos, EnemyType type, Object* object, Player* player);
+	~Enemy();
+
+	void Update() override;
+	void Draw() override;
+
+	void Shoot();   // 弾を発射
+	void IsDead();  // 死亡関数
+
+	void UpdateTurret();   // 固定砲台
+	void UpdateChaser();   // 追従タイプ
+
+	bool IsAlive() const { return m_alive; }
+	VECTOR GetPosition() const { return Position; }
+
+private:
+	EnemyType type;		// Enemy のタイプ
+
+	Player* player;		// Player ポインタ参照
+	Object* object;		// Object ポインタ参照
+
+	int	Body_m_handle,  // 車体のハンドル
+		Head_m_handle;  // 砲塔のハンドル
+
+	bool m_alive;		// 生存フラグ（Player用）
+
+	bool  m_Exploding;          // 爆発中のフラグ
+	int   m_Explosion_Handle;   // 爆発モデルのハンドル
+	float m_Explosion_Scale;    // 現在サイズ（最初は小さい）
+
+	float pos_x,
+		pos_y1,	// 車体用 Y座標
+		pos_y2,	// 砲塔用 Y座標
+		pos_z;	// 敵用座標（x,y,z）
+
+	// 敵用ベクター
+	VECTOR Position;		// 移動
+	VECTOR Body_Rotation,	// 回転(車体)
+		Head_Rotation;		// 回転(砲塔)
+
+	// 向いている方向に前進後進する為のベクター
+	VECTOR forward;
+
+	// 弾管理
+	std::vector<std::unique_ptr<Bullet>> bullets;
+
+	// 最大同時発射数
+	//static constexpr int Max_Player_Bullets = 9;
+
+	int shootTimer;	// 発射タイマー
+	static constexpr int ShootInterval = 300;
+};
+
+
+//Enemy.cpp
+#include "Enemy.h"
+#include "Player.h"
+#include "Object.h"
+#include "Config.h"
+#include <cmath>
+
+static const float Speed = 0.015f;		// 移動速度
+static const float Angle = 0.020f;		// 車体の移転速度
+
+Enemy::Enemy(const VECTOR& spawnPos, EnemyType type, Object* object, Player* player) :
+	type(type),
+	player(player),
+	m_alive(true),
+	Position(spawnPos),
+	m_Exploding(false),
+	m_Explosion_Handle(-1),
+	m_Explosion_Scale(0.0f),
+	Body_m_handle(-1),
+	Head_m_handle(-1),
+	pos_x(0.0f),
+	pos_y1(DX_PI_F),
+	pos_y2(0.0f),
+	pos_z(0.0f),
+	shootTimer(0),
+	object(object)
+{
+	// 3Dモデルの読み込み
+	Body_m_handle = MV1LoadModel("Assets/Enemy_Tank_A(Body).mv1");
+	Head_m_handle = MV1LoadModel("Assets/Enemy_Tank_A(Head).mv1");
+
+	// 位置管理
+	Body_Rotation = VGet(0.0f, pos_y1, 0.0f); // 車体用回転
+	Head_Rotation = VGet(0.0f, pos_y2, 0.0f); // 砲塔用回転
+
+	forward.x = sinf(pos_y1);
+	forward.z = cosf(pos_y1);
+
+	// モデルの位置を設定する(車体)
+	MV1SetPosition(Body_m_handle, Position);	  // 位置座標
+	MV1SetRotationXYZ(Body_m_handle, Body_Rotation); // 回転座標
+
+	// モデルの位置を設定する(砲塔)
+	MV1SetPosition(Head_m_handle, Position);	  // 位置座標
+	MV1SetRotationXYZ(Head_m_handle, Head_Rotation); // 回転座標
+}
+
+Enemy::~Enemy()
+{
+	//// モデルの削除
+	//MV1DeleteModel(Body_m_handle);
+	//MV1DeleteModel(Head_m_handle);
+}
+
+void Enemy::Update()
+{
+	// 生存中
+	if (m_alive) {
+		switch (type)
+		{
+		case EnemyType::Turret:
+			UpdateTurret();
+			break;
+		case EnemyType::Chaser:
+			UpdateChaser();
+			break;
+		}
+
+		shootTimer++;
+
+		// 弾発射
+		if (shootTimer >= ShootInterval)
+		{
+			if (type == EnemyType::Turret){
+				Shoot();
+				shootTimer = 0;
+			}
+			if (type == EnemyType::Chaser) {
+
+				VECTOR enemyPos = Position;
+				VECTOR playerPos = player->GetPosition();
+
+				bool hasWall = object->HasWallBetween(
+					enemyPos,
+					playerPos,
+					Config::Bullet_Half
+				);
+
+				if (!hasWall)
+				{
+					Shoot();
+					shootTimer = 0;
+				}
+			}
+		}
+
+		// 弾更新
+		for (auto& b : bullets)
+			b->Update();
+
+		bullets.erase(
+			std::remove_if(
+				bullets.begin(),
+				bullets.end(),
+				[](const std::unique_ptr<Bullet>& b)
+				{
+					return !b->IsAlive();
+				}),
+			bullets.end()
+		);
+
+		// モデルの位置を設定する(車体)
+		MV1SetPosition(Body_m_handle, Position);		 // 位置座標
+		MV1SetRotationXYZ(Body_m_handle, Body_Rotation); // 回転座標
+
+		// モデルの位置を設定する(砲塔)
+		MV1SetPosition(Head_m_handle, Position);		 // 位置座標
+		MV1SetRotationXYZ(Head_m_handle, Head_Rotation); // 回転座標
+	}
+
+	// 爆発中
+	if (m_Exploding)
+	{
+		m_Explosion_Scale += Config::ExplosionGrowSpeed;
+
+		// 拡大
+		MV1SetScale(
+			m_Explosion_Handle,
+			VGet(
+				m_Explosion_Scale,
+				m_Explosion_Scale,
+				m_Explosion_Scale
+			)
+		);
+
+		// 最大サイズに達したら消す
+		if (m_Explosion_Scale >= Config::ExplosionEndScale)
+		{
+			MV1DeleteModel(m_Explosion_Handle);
+			m_Explosion_Handle = -1;
+			m_Exploding = false;
+		}
+	}
+}
+
+void Enemy::UpdateTurret()
+{
+	VECTOR p = player->GetPosition();
+	VECTOR dir = VSub(p, Position);
+
+	// 砲塔だけを回す
+	pos_y2 = atan2f(dir.x, dir.z) + DX_PI_F;
+	
+	// 車体は動かない
+	Body_Rotation = VGet(0.0f, pos_y1, 0.0f); // 車体用回転
+	Head_Rotation = VGet(0.0f, pos_y2, 0.0f); // 砲塔用回転
+}
+
+void Enemy::UpdateChaser()
+{
+	VECTOR p = player->GetPosition();
+	VECTOR toPlayer = VSub(p, Position);
+	float dist = VSize(toPlayer);
+
+	// プレイヤーを見る
+	pos_y2 = atan2f(toPlayer.x, toPlayer.z) + DX_PI_F;
+
+	VECTOR dir = VNorm(toPlayer);
+
+	const float ApproachDistance = 8.0f; // 接近距離
+	const float OrbitDistance	 = 5.0f; // 回り込み距離
+
+	VECTOR moveDir = VGet(0, 0, 0);
+
+	// 距離が離れすぎていたら近づく
+	if (dist > ApproachDistance)
+	{
+		moveDir = dir;
+	}
+	else if (dist > OrbitDistance)
+	{
+		VECTOR left = VGet(-dir.z, 0.0f, dir.x);
+		moveDir = VAdd(dir, left);
+	}
+	else
+	{
+		VECTOR left = VGet(-dir.z, 0.0f, dir.x);
+		moveDir = left;
+	}
+
+	// 壁判定つき移動
+	float nextX = Position.x + moveDir.x * Speed;
+	float nextZ = Position.z + moveDir.z * Speed;
+
+	// X方向の壁判定
+	if (!object->CheckHit(nextX, Position.z, Config::Enemy_Half))
+	{
+		Position.x = nextX;
+	}
+	// Z方向の壁判定
+	if (!object->CheckHit(Position.x, nextZ, Config::Enemy_Half))
+	{
+		Position.z = nextZ;
+	}
+
+	Body_Rotation = VGet(pos_x, pos_y1, pos_z); // 車体用回転
+	Head_Rotation = VGet(pos_x, pos_y2, pos_z); // 砲塔用回転
+}
+
+void Enemy::Draw()
+{
+	// 生存時
+	if (m_alive)
+	{
+		MV1DrawModel(Body_m_handle);
+		MV1DrawModel(Head_m_handle);
+		return;
+	}
+
+	// 死亡時
+	if (m_Exploding && m_Explosion_Handle != -1)
+	{
+		MV1DrawModel(m_Explosion_Handle);
+	}
+
+	// 弾描画
+	for (auto& b : bullets)
+		b->Draw();
+
+	// 当たり判定の可視化（デバッグ用）
+	{
+		//VECTOR minPos = VGet(
+		//	pos_x - Player_Half,
+		//	0.0f,
+		//	pos_z - Player_Half
+		//);
+		//VECTOR maxPos = VGet(
+		//	pos_x + Player_Half,
+		//	1.0f,
+		//	pos_z + Player_Half
+		//);
+		//// 赤いワイヤーフレームの箱
+		//DrawCube3D(
+		//	minPos,
+		//	maxPos,
+		//	GetColor(255, 0, 0),
+		//	GetColor(255, 0, 0),
+		//	FALSE
+		//);
+	}
+}
+
+void Enemy::Shoot()
+{
+	// 死亡したら何もできない
+	if (!m_alive) return;
+
+	VECTOR shotDir;
+	shotDir.x = -sinf(pos_y2);
+	shotDir.y = 0.0f;
+	shotDir.z = -cosf(pos_y2);
+	shotDir = VNorm(shotDir);
+
+	const float MuzzleOffset = 0.8f; // 砲身の長さ（弾の発射位置）
+	VECTOR muzzlePos = VGet(
+		Position.x + shotDir.x * MuzzleOffset,
+		0.4f,
+		Position.z + shotDir.z * MuzzleOffset
+	);
+
+	bullets.push_back(
+		std::make_unique<Bullet>(muzzlePos, shotDir, object, player)
+	);
+}
+
+void Enemy::IsDead()
+{
+	if (!m_alive) return;
+	m_alive = false;
+
+	// 戦車モデルを消す
+	MV1DeleteModel(Body_m_handle);
+	MV1DeleteModel(Head_m_handle);
+	Body_m_handle = -1;
+	Head_m_handle = -1;
+
+	// 爆発モデル生成
+	m_Explosion_Handle = MV1LoadModel("Assets/Explosion.mv1");
+	m_Explosion_Scale = Config::ExplosionStartScale;
+	m_Exploding = true;
+
+	// 位置は戦車の位置
+	MV1SetPosition(m_Explosion_Handle, Position);
+	MV1SetScale(m_Explosion_Handle,
+		VGet(m_Explosion_Scale, m_Explosion_Scale, m_Explosion_Scale)
+	);
+}
 
 //Object.h
 #pragma once
@@ -484,6 +977,9 @@ VECTOR Player::GetMouseWorldPos()
 #include <fstream>
 #include <sstream>
 #include <vector>
+
+class Enemy;
+class Player;
 
 class Object : public GameObject {
 public:
@@ -497,6 +993,13 @@ public:
 
 	// プレイヤー初期位置取得
 	bool GetPlayerSpawnPos(VECTOR& outPos);
+
+	// 敵の初期位置取得（複数）
+	void GetEnemySpawnPos(std::vector<Enemy*>& outEnemies,
+		Player* player);
+
+	// プレイヤーと敵の間に壁があるかどうかの関数
+	bool HasWallBetween(const VECTOR& from, const VECTOR& to, float radius);
 
 private:
 	int	Ground_m_handle; // 地面のハンドル
@@ -518,6 +1021,7 @@ private:
 
 //Object.cpp
 #include "Object.h"
+#include "Enemy.h"
 #include "Config.h"
 #include <cmath>
 
@@ -648,6 +1152,59 @@ bool Object::GetPlayerSpawnPos(VECTOR& outPos)
 	return false;
 }
 
+void Object::GetEnemySpawnPos(std::vector<Enemy*>& outEnemies, Player* player)
+{
+	for (int z = 0; z < Map_pos.z; z++)
+	{
+		for (int x = 0; x < Map_pos.x; x++)
+		{
+			int v = mapData[z][x];
+
+			VECTOR pos = VGet(
+				(x + 0.5f - Map_pos.x * 0.5f) * Ground_Size,
+				0.0f,
+				-(z + 0.5f - Map_pos.z * 0.5f) * Ground_Size
+			);
+
+			if (v == 2)
+			{
+				outEnemies.push_back(
+					new Enemy(pos, EnemyType::Turret, this, player)
+				);
+			}
+			else if (v == 3)
+			{
+				outEnemies.push_back(
+					new Enemy(pos, EnemyType::Chaser, this, player)
+				);
+			}
+		}
+	}
+}
+
+bool Object::HasWallBetween(const VECTOR& from, const VECTOR& to, float radius)
+{
+	VECTOR dir = VSub(to, from);
+	float length = VSize(dir);
+	dir = VNorm(dir);
+
+	const float step = Ground_Size * 0.25f; // 判定間隔
+	int steps = static_cast<int>(length / step);
+
+	VECTOR pos = from;
+
+	for (int i = 0; i < steps; i++)
+	{
+		pos = VAdd(pos, VScale(dir, step));
+
+		if (CheckHit(pos.x, pos.z, radius))
+		{
+			return true; // 壁がある
+		}
+	}
+	return false;
+}
+
 void Object::LoadCSV(const char* filename)
 {
 	std::ifstream file(filename);
@@ -668,222 +1225,4 @@ void Object::LoadCSV(const char* filename)
 
 	Map_pos.x = (int)mapData[0].size();
 	Map_pos.z = (int)mapData.size();
-}
-
-
-
-//Bullet.h
-#pragma once
-#include "../Library/GameObject.h"
-#include <vector>
-
-class Object;
-class Player;
-
-class Bullet : public GameObject {
-public:
-    Bullet(const VECTOR& startPos, const VECTOR& dir, Object* obj, Player* player);
-    ~Bullet();
-
-    void Update()override;
-    void Draw() override;
-
-    bool IsAlive() const { return m_alive || !m_trail.empty(); }
-
-private:
-    int Bullet_m_handle;   // 弾のハンドル
-
-    VECTOR m_pos;          // 弾の位置
-    VECTOR m_vel;          // 弾の速度
-    int    m_reflect;      // 弾の反射回数
-    bool   m_alive;        // 生存フラグ
-    bool   m_trailGrowing; // 軌道生成フラグ
-
-    // 壁との当たり判定
-    void CheckWallCollision();
-    bool CheckHitWall(VECTOR& outNormal);
-
-    // 反射処理
-    void Reflect(const VECTOR& normal);
-
-    // 弾の軌道履歴
-    std::vector<VECTOR> m_trail;
-
-    // 軌道線の残る長さ
-    static constexpr int MaxTrailPoints = 60;
-
-    // 当たり判定用（壁）
-    Object* object;     // Objectのポインタを作成
-    Player* player;     // Playerのポインタを作成
-};
-
-
-
-//Bullet.cpp
-#include "Bullet.h"
-#include "Object.h"
-#include "Player.h"
-#include "Config.h"
-
-Bullet::Bullet
-(const VECTOR& startPos, const VECTOR& dir, Object* obj, Player* player)
-    : object(obj), player(player), m_reflect(2), Bullet_m_handle(-1)
-{
-    // 3Dモデルの読み込み
-    Bullet_m_handle = MV1LoadModel("Assets/Bullet.mv1");
-
-    m_pos          = startPos;
-    m_vel          = VScale(VNorm(dir), 0.025f);
-    m_alive        = true;
-    m_trailGrowing = true;
-
-    // 最初の位置を記録
-    m_trail.push_back(m_pos);
-
-    // 初期位置設定
-    MV1SetPosition(Bullet_m_handle, m_pos);
-
-}
-
-Bullet::~Bullet()
-{
-    MV1DeleteModel(Bullet_m_handle);
-}
-
-void Bullet::Update()
-{
-    if (m_alive) {
-        // 移動
-        m_pos = VAdd(m_pos, m_vel);
-
-        // プレイヤーとの当たり判定
-        if (player && player->IsAlive())
-        {
-            VECTOR p = player->GetPosition();
-
-            if (fabs(m_pos.x - p.x) < (Config::Bullet_Half + Config::Player_Half) &&
-                fabs(m_pos.z - p.z) < (Config::Bullet_Half + Config::Player_Half))
-            {
-                // プレイヤー消滅
-                player->IsDead();
-
-                // 弾も消す
-                m_alive = false;
-                return;
-            }
-        }
-
-        // 弾が生きている間は軌道生成
-        if (m_trailGrowing) {
-            // 軌道を保存
-            m_trail.push_back(m_pos);
-
-            // 軌道線の後ろが徐々に消える
-            if ((int)m_trail.size() > MaxTrailPoints) {
-                m_trail.erase(m_trail.begin());
-            }
-        }
-
-        CheckWallCollision();
-
-        // 向き計算
-        float yaw = atan2f(-m_vel.x, -m_vel.z);
-        VECTOR rot = VGet(0.0f, yaw, 0.0f);
-
-        // 弾の位置更新
-        MV1SetPosition(Bullet_m_handle, m_pos);
-        MV1SetRotationXYZ(Bullet_m_handle, rot);
-    }
-    else{
-        // 軌道を生成はしない
-        m_trailGrowing = false;
-
-        // 軌道線の後ろが徐々に消える
-        if (!m_trail.empty()) {
-            m_trail.erase(m_trail.begin());
-        }
-    }
-}
-
-void Bullet::Draw()
-{
-    if (m_alive)
-    {  
-        // モデルの表示
-        MV1DrawModel(Bullet_m_handle);
-    }
-
-    // 軌道線の表示
-    for (size_t i = 1; i < m_trail.size(); i++)
-    {
-        DrawLine3D(
-            m_trail[i - 1],
-            m_trail[i],
-            GetColor(255, 255, 255)
-        );
-    }
-
-    // デバッグ用表示
-    {
-      /*  printfDx("Bullet Draw Pos:(%.2f, %.2f, %.2f)\n",
-            m_pos.x, m_pos.y, m_pos.z);*/
-
-    }
-
-}
-
-void Bullet::CheckWallCollision()
-{
-    if (!object) return;
-
-    VECTOR nextPos = VAdd(m_pos, m_vel);
-
-    // X方向
-    if (object->CheckHit(nextPos.x, m_pos.z, Config::Bullet_Half))
-    {
-        VECTOR normal = VGet(
-            (m_vel.x > 0.0f) ? -1.0f : 1.0f,
-            0.0f,
-            0.0f
-        );
-        Reflect(normal);
-        return;
-    }
-
-    // Z方向
-    if (object->CheckHit(m_pos.x, nextPos.z, Config::Bullet_Half))
-    {
-        VECTOR normal = VGet(
-            0.0f,
-            0.0f,
-            (m_vel.z > 0.0f) ? -1.0f : 1.0f
-        );
-        Reflect(normal);
-        return;
-    }
-}
-
-bool Bullet::CheckHitWall(VECTOR& outNormal)
-{
-    return false;
-}
-
-void Bullet::Reflect(const VECTOR& normal)
-{
-    // 反射が終えたら消える
-    if (m_reflect <= 0)
-    {
-        m_alive = false;
-        return;
-    }
-
-    VECTOR n = VNorm(normal);
-
-    float dot = VDot(m_vel, n);
-    m_vel = VSub(m_vel, VScale(n, 2.0f * dot));
-
-    // めり込み防止
-    m_pos = VAdd(m_pos, VScale(m_vel, 0.1f));
-
-    m_reflect--;
 }

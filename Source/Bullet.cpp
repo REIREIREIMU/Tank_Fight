@@ -1,16 +1,18 @@
 #include "Bullet.h"
 #include "Object.h"
 #include "Player.h"
+#include "Enemy.h"
 #include "Config.h"
 #include <cmath>
 
 Bullet::Bullet
-(const VECTOR& startPos, const VECTOR& dir, Object* obj, Player* ownerPlayer)
+(const VECTOR& startPos, const VECTOR& dir, Object* obj, Player* ownerPlayer, std::vector<Enemy*>* enemyList)
     : m_pos(startPos),
     m_alive(true),
     m_trailGrowing(true),
     object(obj), 
     owner(ownerPlayer),
+    enemies(enemyList),
     m_reflect(2),
     Bullet_m_handle(-1)
 {
@@ -55,6 +57,24 @@ void Bullet::Update()
                 // íeÇ‡è¡Ç∑
                 m_alive = false;
                 return;
+            }
+        }
+
+        // ìGÇ∆ÇÃìñÇΩÇËîªíË
+        if (enemies)
+        {
+            for (Enemy* e : *enemies)
+            {
+                if (!e || !e->IsAlive()) continue;
+
+                VECTOR ep = e->GetPosition();
+                if (fabs(m_pos.x - ep.x) < (Config::Bullet_Half + Config::Enemy_Half) &&
+                    fabs(m_pos.z - ep.z) < (Config::Bullet_Half + Config::Enemy_Half))
+                {
+                    e->IsDead();     // ìGéÄñS
+                    m_alive = false; // íeè¡ñ≈
+                    return;
+                }
             }
         }
 
@@ -147,11 +167,6 @@ void Bullet::CheckWallCollision()
         Reflect(normal);
         return;
     }
-}
-
-bool Bullet::CheckHitWall(VECTOR& outNormal)
-{
-    return false;
 }
 
 void Bullet::Reflect(const VECTOR& normal)

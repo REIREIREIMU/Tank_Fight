@@ -1,4 +1,5 @@
 #include "Player.h"
+#include "Enemy.h"
 #include "Object.h"
 #include "Config.h"
 #include <cmath>
@@ -6,7 +7,7 @@
 static const float Speed  = 0.025f;		// ˆÚ“®‘¬“x
 static const float Angle  = 0.020f;		// ŽÔ‘Ì‚ÌˆÚ“]‘¬“x
 
-Player::Player(Object* obj) :
+Player::Player(Object* obj, std::vector<Enemy*>* enemyList) :
 	m_alive(true),
 	m_Exploding(false),
 	m_Explosion_Handle(-1),
@@ -17,7 +18,8 @@ Player::Player(Object* obj) :
 	pos_y1(DX_PI_F), 
 	pos_y2(0.0f),
 	pos_z(0.0f), 
-	object(obj)
+	object(obj),
+	enemies(enemyList)
 {
 	VECTOR spawnPos;
 
@@ -232,7 +234,7 @@ void Player::Shoot()
 	);
 
 	bullets.push_back(
-		std::make_unique<Bullet>(muzzlePos, shotDir, object, this)
+		std::make_unique<Bullet>(muzzlePos, shotDir, object, this, enemies)
 	);
 }
 

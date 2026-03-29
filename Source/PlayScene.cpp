@@ -6,10 +6,11 @@
 
 PlayScene::PlayScene()
 {
-    camera = new Camera();        //camera‚Ì‰Šú‰»
-    object = new Object();        //object‚Ì‰Šú‰»
-    player = new Player(object);  //player‚Ì‰Šú‰»
+    camera = new Camera();                  //camera‚Ì‰Šú‰»
+    object = new Object();                  //object‚Ì‰Šú‰»
+    player = new Player(object, &enemies);  //player‚Ì‰Šú‰»
 
+    // Enemy¶¬
     object->GetEnemySpawnPos(enemies, player);
 }
 
