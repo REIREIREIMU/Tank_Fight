@@ -268,6 +268,11 @@ void Enemy::Shoot()
 	// 死亡したら何もできない
 	if (!m_alive) return;
 
+	// プレイヤーの弾が 3発ステージ上に存在している限り撃てない
+	if (CountAliveBullets() >= Max_Enemy_Bullets) {
+		return;
+	}
+
 	VECTOR shotDir;
 	shotDir.x = -sinf(pos_y2);
 	shotDir.y = 0.0f;
@@ -307,4 +312,17 @@ void Enemy::IsDead()
 	MV1SetScale(m_Explosion_Handle,
 		VGet(m_Explosion_Scale, m_Explosion_Scale, m_Explosion_Scale)
 	);
+}
+
+int Enemy::CountAliveBullets() const
+{
+	int count = 0;
+	for (const auto& b : bullets)
+	{
+		if (b->IsAlive())
+		{
+			count++;
+		}
+	}
+	return count;
 }

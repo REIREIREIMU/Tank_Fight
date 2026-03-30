@@ -34,6 +34,9 @@ public:
 	VECTOR GetPosition() const { return Position; }
 	void SetPosition(const VECTOR& pos) { Position = pos; }
 
+	// 現在生きている弾数を数える関数
+	int CountAliveBullets() const;
+
 private:
 	EnemyType type;		// Enemy のタイプ
 
@@ -65,8 +68,8 @@ private:
 	// 弾管理
 	std::vector<std::unique_ptr<Bullet>> bullets;
 
-	// 最大同時発射数
-	//static constexpr int Max_Player_Bullets = 9;
+	// 最大同時発射数(敵個人の)
+	static constexpr int Max_Enemy_Bullets = 3;
 
 	int shootTimer;	// 発射タイマー
 	static constexpr int ShootInterval = 300;
