@@ -9,7 +9,7 @@ static const int DEATH_WAIT = 120;
 static const int STAGE_WAIT = 120; // 敵全滅後待機
 
 // 最大ステージ
-static const int MAX_STAGE = 3;
+static const int MAX_STAGE = 5;
 
 // 円同士の衝突を解決
 static void ResolveCollision(
