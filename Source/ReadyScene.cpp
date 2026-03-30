@@ -45,11 +45,12 @@ void ReadyScene::Draw()
 
 	DrawExtendGraph(0, 0, screenW, screenH, image_, TRUE);
 
+	SetFontSize(45);
 	DrawFormatString(
-		screenW / 2 - 70,
-		screenH / 2 + 20,
+		screenW / 2 - 40,
+		screenH / 2,
 		GetColor(255, 255, 255),
-		"LIFE : %d",
+		"~ %d",
 		player->Player::GetLives()
 	);
 

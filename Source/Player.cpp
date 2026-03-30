@@ -303,3 +303,20 @@ VECTOR Player::GetMouseWorldPos()
 
 	return hitPos;
 }
+
+
+int Player::GetLives()
+{
+	return m_lives;
+}
+
+void Player::ResetLives(int v)
+{
+	m_lives = v;
+}
+
+void Player::DecreaseLives()
+{
+	if (m_lives > 0)
+		m_lives--;
+}

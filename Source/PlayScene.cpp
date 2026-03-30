@@ -194,10 +194,11 @@ void PlayScene::Draw()
             VGet(0.0f, 0.0f, 0.0f)
         );
 
+        SetFontSize(30);
         DrawFormatString(
             20, 20,
             GetColor(255, 255, 255),
-            "LIFE : %d",
+            "Žc‹@F%d",
             player->Player::GetLives()
         );
     }

@@ -28,9 +28,9 @@ public:
 	void DrawBullets();
 
 	// c‹@ŠÖ˜A
-	int  GetLives() const			{ return m_lives; }
-	void ResetLives(int lives = 2)	{ m_lives = lives; }
-	void DecreaseLives()			{ if (m_lives > 0) m_lives--; }
+	static int  GetLives();
+	static void ResetLives(int lives = 2);
+	static void DecreaseLives();
 
 	// Œ»İ¶‚«‚Ä‚¢‚é’e”‚ğ”‚¦‚éŠÖ”
 	int CountAliveBullets() const;

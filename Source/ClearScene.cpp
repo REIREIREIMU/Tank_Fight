@@ -1,7 +1,9 @@
 #include "ClearScene.h"
+#include "Player.h"
 
-ClearScene::ClearScene()
+ClearScene::ClearScene() 
 {
+	Player::ResetLives(2);
 }
 
 ClearScene::~ClearScene()
