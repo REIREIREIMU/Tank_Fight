@@ -7,9 +7,10 @@
 static const float Speed  = 0.025f;		// 移動速度
 static const float Angle  = 0.020f;		// 車体の移転速度
 
+int Player::m_lives = 2;	// 残機の個数
+
 Player::Player(Object* obj, std::vector<Enemy*>* enemyList) :
 	m_alive(true),
-	m_lives(2),
 	m_Exploding(false),
 	m_Explosion_Handle(-1),
 	m_Explosion_Scale(0.0f),

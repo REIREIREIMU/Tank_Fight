@@ -37,7 +37,7 @@ public:
 
 private:
 	bool m_alive;		// 生存フラグ（Player用）
-	int  m_lives;		// 残機
+	static int m_lives; // 残機
 
 	bool  m_Exploding;          // 爆発中のフラグ
 	int   m_Explosion_Handle;   // 爆発モデルのハンドル

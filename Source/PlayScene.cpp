@@ -117,11 +117,17 @@ void PlayScene::Update()
            if (timer >= DEATH_WAIT)
            {  
                // Žc‹@‚ð1Œ¸‚ç‚·
-               player->DecreaseLives();
+               player->Player::DecreaseLives();
 
-               SceneManager::ChangeScene(
-                   player->GetLives() > 0 ? "READY" : "CLEAR"
-               );
+               if (player->Player::GetLives() > 0)
+               {
+                   SceneManager::ChangeScene("READY");
+               }
+               else
+               {
+                   SceneManager::ChangeScene("CLEAR");
+               }
+               return;
            }
        }
    }
@@ -192,7 +198,7 @@ void PlayScene::Draw()
             20, 20,
             GetColor(255, 255, 255),
             "LIFE : %d",
-            player->GetLives()
+            player->Player::GetLives()
         );
     }
 }
