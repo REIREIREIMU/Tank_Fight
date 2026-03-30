@@ -13,7 +13,7 @@ bool CheckAABB(
 		fabs(az - bz) < (aHalf + bHalf);
 }
 
-Object::Object() :
+Object::Object(int stage) :
 	Block_m_handle(-1), pos_x(0.0f), pos_y(0.0f), pos_z(0.0f),
 	Ground_m_handle(-1), Half_Size(50), Ground_Size(1.0f)
 {
@@ -21,8 +21,11 @@ Object::Object() :
 	Block_m_handle  = MV1LoadModel("Assets/Block.mv1");
 	Ground_m_handle = MV1LoadModel("Assets/Ground.mv1");
 
-	// 「CSV」読み込み
-	LoadCSV("Assets/Stage/Stage_00.csv");
+	// 「CSV」読み込み（ステージごとで切り替える）
+	char filename[64];
+	sprintf_s(filename, "Assets/Stage/Stage_%02d.csv", stage);
+
+	LoadCSV(filename);
 }
 
 Object::~Object()

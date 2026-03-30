@@ -31,9 +31,9 @@ static void ResolveCollision(
 
 PlayScene::PlayScene():timer(0)
 {
-    camera = new Camera();                  //camera‚Ì‰Šú‰»
-    object = new Object();                  //object‚Ì‰Šú‰»
-    player = new Player(object, &enemies);  //player‚Ì‰Šú‰»
+    camera = new Camera();                   //camera‚Ì‰Šú‰»
+    object = new Object(Player::GetStage()); //object‚Ì‰Šú‰»
+    player = new Player(object, &enemies);   //player‚Ì‰Šú‰»
 
     // Enemy¶¬
     object->GetEnemySpawnPos(enemies, player);

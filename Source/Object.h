@@ -9,7 +9,7 @@ class Player;
 
 class Object : public GameObject {
 public:
-	Object();
+	Object(int stage);
 	~Object();
 
 	void Update() override;
