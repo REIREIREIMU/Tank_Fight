@@ -9,6 +9,7 @@ static const float Angle  = 0.020f;		// ŽÔ‘Ì‚ÌˆÚ“]‘¬“x
 
 Player::Player(Object* obj, std::vector<Enemy*>* enemyList) :
 	m_alive(true),
+	m_lives(2),
 	m_Exploding(false),
 	m_Explosion_Handle(-1),
 	m_Explosion_Scale(0.0f),
@@ -259,6 +260,14 @@ void Player::IsDead()
 	MV1SetScale(m_Explosion_Handle,
 		VGet(m_Explosion_Scale, m_Explosion_Scale, m_Explosion_Scale)
 	);
+}
+
+void Player::DrawBullets()
+{
+	for (auto& b : bullets)
+	{
+		b->Draw();
+	}
 }
 
 int Player::CountAliveBullets() const

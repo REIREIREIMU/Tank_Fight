@@ -24,11 +24,20 @@ public:
 	VECTOR GetPosition() const { return Position; }
 	void SetPosition(const VECTOR& pos) { Position = pos; }
 
+	// 弾を描画
+	void DrawBullets();
+
+	// 残機関連
+	int  GetLives() const			{ return m_lives; }
+	void ResetLives(int lives = 2)	{ m_lives = lives; }
+	void DecreaseLives()			{ if (m_lives > 0) m_lives--; }
+
 	// 現在生きている弾数を数える関数
 	int CountAliveBullets() const;
 
 private:
 	bool m_alive;		// 生存フラグ（Player用）
+	int  m_lives;		// 残機
 
 	bool  m_Exploding;          // 爆発中のフラグ
 	int   m_Explosion_Handle;   // 爆発モデルのハンドル

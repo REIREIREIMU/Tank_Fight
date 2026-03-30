@@ -3,24 +3,29 @@
 
 TitleScene::TitleScene()
 {
+	image_ = LoadGraph("Assets/TITLE.png");
 }
 
 TitleScene::~TitleScene()
 {
+	if (image_ >= 0)
+	{
+		DeleteGraph(image_);
+		image_ = -1;
+	}
 }
 
 void TitleScene::Update()
 {
-	if (CheckHitKey(KEY_INPUT_R)) {
+	if (CheckHitKey(KEY_INPUT_SPACE)) {
 		SceneManager::ChangeScene("READY");
-	}
-	if (CheckHitKey(KEY_INPUT_ESCAPE)) {
-		SceneManager::Exit();
 	}
 }
 
 void TitleScene::Draw()
 {
-	DrawString(0, 0, "TITLE SCENE", GetColor(255,255,255));
-	DrawString(100, 400, "Push [R]Key To READY", GetColor(255, 255, 255));
+	int screenW, screenH;
+	GetDrawScreenSize(&screenW, &screenH);
+
+	DrawExtendGraph( 0, 0, screenW, screenH, image_, TRUE);
 }

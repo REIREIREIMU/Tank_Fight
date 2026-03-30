@@ -142,6 +142,14 @@ void Enemy::Update()
 	}
 }
 
+void Enemy::DrawBullets()
+{
+	for (auto& b : bullets)
+	{
+		b->Draw();
+	}
+}
+
 void Enemy::UpdateTurret()
 {
 	VECTOR p = player->GetPosition();

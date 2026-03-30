@@ -30,4 +30,6 @@ private:
 	// ²‚ÌF
 	int xAxisColor = GetColor(200, 80, 80);  // X²FÔ
 	int zAxisColor = GetColor( 80, 80, 200); // Z²FÂ
+
+	int timer;
 };

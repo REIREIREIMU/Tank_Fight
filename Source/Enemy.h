@@ -24,6 +24,9 @@ public:
 	void Shoot();   // ’e‚ğ”­Ë
 	void IsDead();  // €–SŠÖ”
 
+	// ’e‚ğ•`‰æ
+	void DrawBullets();
+
 	void UpdateTurret();   // ŒÅ’è–C‘ä
 	void UpdateChaser();   // ’Ç]ƒ^ƒCƒv
 
@@ -66,5 +69,5 @@ private:
 	//static constexpr int Max_Player_Bullets = 9;
 
 	int shootTimer;	// ”­Ëƒ^ƒCƒ}[
-	static constexpr int ShootInterval = 600;
+	static constexpr int ShootInterval = 300;
 };

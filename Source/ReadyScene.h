@@ -8,4 +8,7 @@ public:
 	~ReadyScene();
 	void Update() override;
 	void Draw() override;
+private:
+	int image_;
+	int timer;
 };

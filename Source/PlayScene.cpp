@@ -5,6 +5,8 @@
 #include "Object.h"
 #include "Config.h"
 
+static const int DEATH_WAIT = 120;
+
 // 円同士の衝突を解決
 static void ResolveCollision(
     VECTOR& posA, float radiusA,
@@ -26,7 +28,7 @@ static void ResolveCollision(
     posB = VSub(posB, VScale(pushDir, overlap * 0.5f));
 }
 
-PlayScene::PlayScene()
+PlayScene::PlayScene():timer(0)
 {
     camera = new Camera();                  //cameraの初期化
     object = new Object();                  //objectの初期化
@@ -46,14 +48,14 @@ PlayScene::~PlayScene()
 
 void PlayScene::Update()
 {
-   if (CheckHitKey(KEY_INPUT_G)) {
-       SceneManager::ChangeScene("GAME OVER");
-       return;
-   }
-   else if (CheckHitKey(KEY_INPUT_C)) {
-       SceneManager::ChangeScene("CLEAR");
-       return;
-   }
+   //if (CheckHitKey(KEY_INPUT_G)) {
+   //    SceneManager::ChangeScene("GAME OVER");
+   //    return;
+   //}
+   //else if (CheckHitKey(KEY_INPUT_C)) {
+   //    SceneManager::ChangeScene("CLEAR");
+   //    return;
+   //}
 
    // 各自Update
    camera->Update();
@@ -102,41 +104,95 @@ void PlayScene::Update()
            b->SetPosition(posB);
        }
    }
+
+   // プレイヤー死亡後の処理
+   if (!player->IsAlive())
+   {
+       if (timer < 0){
+           timer = 0;
+       }
+       else
+       {
+           timer++;
+           if (timer >= DEATH_WAIT)
+           {  
+               // 残機を1減らす
+               player->DecreaseLives();
+
+               SceneManager::ChangeScene(
+                   player->GetLives() > 0 ? "READY" : "CLEAR"
+               );
+           }
+       }
+   }
 }
 
 void PlayScene::Draw()
 {
+    // 画面クリア
+    ClearDrawScreen();
+
     if (!camera || !player || !object) return;
 
     // グリット線表示(デバック用)
-    //for (int i = -Grid_Half; i <= Grid_Half; i++)
-    //{
-    //    float pos = i * Grid_Size;
+    /*
+    for (int i = -Grid_Half; i <= Grid_Half; i++)
+    {
+        float pos = i * Grid_Size;
 
-    //    // Z方向に線表示
-    //    DrawLine3D(
-    //        VGet(pos, 0.0f, -Grid_Half * Grid_Size),
-    //        VGet(pos, 0.0f, Grid_Half * Grid_Size),
-    //        // X軸の原点のみ「赤」
-    //        (i == 0) ? xAxisColor : GridColor
-    //    );
+        // Z方向に線表示
+        DrawLine3D(
+            VGet(pos, 0.0f, -Grid_Half * Grid_Size),
+            VGet(pos, 0.0f, Grid_Half * Grid_Size),
+            // X軸の原点のみ「赤」
+            (i == 0) ? xAxisColor : GridColor
+        );
 
-    //    // X方向に線表示
-    //    DrawLine3D(
-    //        VGet(-Grid_Half * Grid_Size, 0.0f, pos),
-    //        VGet( Grid_Half * Grid_Size, 0.0f, pos),
-    //        // Z軸の原点のみ「青」
-    //        (i == 0) ? zAxisColor : GridColor
-    //    );
-    //}
+        // X方向に線表示
+        DrawLine3D(
+            VGet(-Grid_Half * Grid_Size, 0.0f, pos),
+            VGet( Grid_Half * Grid_Size, 0.0f, pos),
+            // Z軸の原点のみ「青」
+            (i == 0) ? zAxisColor : GridColor
+        );
+    }
 
-   DrawString(0, 0, "PLAY SCENE", GetColor(255, 255, 255));
-   DrawString(100, 400, "Push [G]Key To GameOverScene", GetColor(255, 255, 255));
+   //DrawString(0, 0, "PLAY SCENE", GetColor(255, 255, 255));
+   //DrawString(100, 400, "Push [G]Key To GameOverScene", GetColor(255, 255, 255));
 
-   DrawString(100, 500, "Push [C]Key To Clear", GetColor(255, 255, 255));
+   //DrawString(100, 500, "Push [C]Key To Clear", GetColor(255, 255, 255));
+   */
 
-   player->Draw();  // プレイヤーのモデルを表示
-   for (auto e : enemies)
-       e->Draw();   // 敵のモデルを表示
-   object->Draw();  // ブロック系統のモデルを表示
+   // 3D描画描画時
+    {
+        SetUseZBuffer3D(TRUE);
+        SetWriteZBuffer3D(TRUE);
+
+        player->Draw();        // プレイヤーのモデルを表示
+        player->DrawBullets(); // プレイヤーの弾
+        for (auto e : enemies) {
+            e->Draw();          // 敵のモデルを表示
+            e->DrawBullets();   // 敵の弾
+        }
+        object->Draw();  // ブロック系統のモデルを表示
+    }
+
+    // UI描画
+    {
+        SetUseZBuffer3D(FALSE);
+        SetWriteZBuffer3D(FALSE);
+
+        // UI用カメラ
+        SetCameraPositionAndTarget_UpVecY(
+            VGet(0.0f, 0.0f, 0.0f),
+            VGet(0.0f, 0.0f, 0.0f)
+        );
+
+        DrawFormatString(
+            20, 20,
+            GetColor(255, 255, 255),
+            "LIFE : %d",
+            player->GetLives()
+        );
+    }
 }
