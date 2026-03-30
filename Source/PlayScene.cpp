@@ -35,6 +35,8 @@ static void ResolveCollision(
 
 PlayScene::PlayScene():timer(0)
 {
+    Enemy::SetInvincible(false);
+
     camera = new Camera();                   //cameraの初期化
     object = new Object(Player::GetStage()); //objectの初期化
     player = new Player(object, &enemies);   //playerの初期化
@@ -104,6 +106,9 @@ void PlayScene::Update()
    // プレイヤー死亡後の処理
    if (!player->IsAlive())
    {
+       // プレイヤー死亡時点で敵を無敵にする
+       Enemy::SetInvincible(true);
+
        if (timer < 0){
            timer = 0;
        }
@@ -130,12 +135,17 @@ void PlayScene::Update()
 
    // 敵全滅チェック
    bool allDead = true;
+   int stageEnemyCount = 0;
+
    for (auto e : enemies)
    {
-       if (e && e->IsAlive())
+       if (e)
        {
-           allDead = false;
-           break;
+           // 倒した敵加算
+           stageEnemyCount++;
+
+           if (e->IsAlive())
+               allDead = false;
        }
    }
 
@@ -143,6 +153,9 @@ void PlayScene::Update()
    {
        stageClear = true;
        stageClearTimer = 0;
+
+       // ステージ分の撃破数を加算
+       Player::AddEnemyKill(stageEnemyCount);
 
        // プレイヤーを無敵可
        Player::SetInvincible(true);

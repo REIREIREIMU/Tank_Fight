@@ -7,6 +7,9 @@
 static const float Speed = 0.013f;		// ˆÚ“®‘¬“x
 static const float Angle = 0.020f;		// Ô‘Ì‚ÌˆÚ“]‘¬“x
 
+// –³“G‚Ì—L–³
+bool Enemy::s_invincible = false;
+
 Enemy::Enemy(const VECTOR& spawnPos, EnemyType type, Object* object, Player* player) :
 	type(type),
 	player(player),
@@ -298,6 +301,10 @@ void Enemy::Shoot()
 
 void Enemy::IsDead()
 {
+	// ƒvƒŒƒCƒ„[‚ª€–S‚µ‚½‚ç–³“G‚É‚È‚é
+	if (s_invincible)
+		return;
+
 	if (!m_alive) return;
 	m_alive = false;
 
@@ -330,4 +337,13 @@ int Enemy::CountAliveBullets() const
 		}
 	}
 	return count;
+}
+
+// –³“G§Œä
+void Enemy::SetInvincible(bool v) {
+	s_invincible = v;
+}
+
+bool  Enemy::IsInvincible() {
+	return s_invincible;
 }

@@ -17,11 +17,6 @@ ReadyScene::ReadyScene(int lives)
 
 ReadyScene::~ReadyScene()
 {
-	/*if (image_ >= 0)
-	{
-		DeleteGraph(image_);
-		image_ = -1;
-	}*/
 }
 
 void ReadyScene::SetLives(int l)

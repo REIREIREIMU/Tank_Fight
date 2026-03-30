@@ -50,9 +50,6 @@
     <ClCompile Include="Library\Time.cpp">
       <Filter>Library</Filter>
     </ClCompile>
-    <ClCompile Include="Source\GameOverScene.cpp">
-      <Filter>SceneManager\GameOverScene</Filter>
-    </ClCompile>
     <ClCompile Include="Source\ClearScene.cpp">
       <Filter>SceneManager\ClearScene</Filter>
     </ClCompile>
@@ -135,9 +132,6 @@
     <ClInclude Include="Library\Time.h">
       <Filter>Library</Filter>
     </ClInclude>
-    <ClInclude Include="Source\GameOverScene.h">
-      <Filter>SceneManager\GameOverScene</Filter>
-    </ClInclude>
     <ClInclude Include="Source\ClearScene.h">
       <Filter>SceneManager\ClearScene</Filter>
     </ClInclude>
@@ -182,9 +176,6 @@
     </Filter>
     <Filter Include="SceneManager\ClearScene">
       <UniqueIdentifier>{4edaff47-840c-4dab-8f72-5fb72cea450a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="SceneManager\GameOverScene">
-      <UniqueIdentifier>{2d71eb99-3ba6-4f6d-bc14-8582bd2b34e9}</UniqueIdentifier>
     </Filter>
     <Filter Include="SceneManager\ReadyScene">
       <UniqueIdentifier>{d2aa5ce8-0c10-451e-911e-958562a5f6db}</UniqueIdentifier>

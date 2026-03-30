@@ -40,6 +40,11 @@ public:
 	static void NextStage();
 	static void ResetStage();
 
+	// 撃破数
+	static int  GetTotalEnemyKill();
+	static void AddEnemyKill(int count);
+	static void ResetEnemyKill();
+
 	// 無敵制御
 	static void SetInvincible(bool v);
 	static bool IsInvincible();
@@ -55,6 +60,7 @@ private:
 	bool m_alive;			      // 生存フラグ（Player用）
 	static bool s_invincible;     // 無敵フラグ
 	static bool s_controlEnabled; // 操作停止フラグ
+	static int s_totalEnemyKill;  // 倒した敵数
 	static int m_lives;		      // 残機
 	static int s_stage;		      // ステージ
 

@@ -37,6 +37,10 @@ public:
 	VECTOR GetPosition() const { return Position; }
 	void SetPosition(const VECTOR& pos) { Position = pos; }
 
+	// 無敵制御
+	static void SetInvincible(bool v);
+	static bool IsInvincible();
+
 	// 現在生きている弾数を数える関数
 	int CountAliveBullets() const;
 
@@ -49,7 +53,8 @@ private:
 	int	Body_m_handle,  // 車体のハンドル
 		Head_m_handle;  // 砲塔のハンドル
 
-	bool m_alive;		// 生存フラグ（Player用）
+	bool m_alive;			  // 生存フラグ（Player用）
+	static bool s_invincible; // 無敵フラグ
 
 	bool  m_Exploding;          // 爆発中のフラグ
 	int   m_Explosion_Handle;   // 爆発モデルのハンドル

@@ -1,4 +1,5 @@
 #include "TitleScene.h"
+#include "Player.h"
 #include <DxLib.h>
 
 TitleScene::TitleScene()
@@ -8,16 +9,16 @@ TitleScene::TitleScene()
 
 TitleScene::~TitleScene()
 {
-	if (image_ >= 0)
-	{
-		DeleteGraph(image_);
-		image_ = -1;
-	}
 }
 
 void TitleScene::Update()
 {
 	if (CheckHitKey(KEY_INPUT_SPACE)) {
+
+		Player::ResetLives(2);
+		Player::ResetStage();
+		Player::ResetEnemyKill();
+
 		SceneManager::ChangeScene("READY");
 	}
 }

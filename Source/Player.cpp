@@ -7,8 +7,9 @@
 static const float Speed  = 0.025f;		// 移動速度
 static const float Angle  = 0.020f;		// 車体の移転速度
 
-int Player::m_lives = 2;	// 残機の個数
-int Player::s_stage = 1;	// 最初のステージ
+int Player::s_totalEnemyKill = 0;	// 倒した敵数
+int Player::m_lives          = 2;	// 残機の個数
+int Player::s_stage          = 1;	// 最初のステージ
 
 // 無敵の有無
 bool Player::s_invincible = false;
@@ -319,6 +320,22 @@ VECTOR Player::GetMouseWorldPos()
 	hitPos.z = nearPos.z + (farPos.z - nearPos.z) * t;
 
 	return hitPos;
+}
+
+// 敵撃破関連
+int Player::GetTotalEnemyKill()
+{
+	return s_totalEnemyKill;
+}
+
+void Player::AddEnemyKill(int count)
+{
+	s_totalEnemyKill += count;
+}
+
+void Player::ResetEnemyKill()
+{
+	s_totalEnemyKill = 0;
 }
 
 // 残機関連
