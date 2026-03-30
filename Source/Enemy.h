@@ -27,6 +27,9 @@ public:
 	// ’e‚ğ•`‰æ
 	void DrawBullets();
 
+	// ’e‘Síœ
+	void ClearBullets();
+
 	void UpdateTurret();   // ŒÅ’è–C‘ä
 	void UpdateChaser();   // ’Ç]ƒ^ƒCƒv
 

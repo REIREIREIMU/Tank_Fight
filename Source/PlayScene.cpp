@@ -6,6 +6,10 @@
 #include "Config.h"
 
 static const int DEATH_WAIT = 120;
+static const int STAGE_WAIT = 120; // 敵全滅後待機
+
+// 最大ステージ
+static const int MAX_STAGE = 3;
 
 // 円同士の衝突を解決
 static void ResolveCollision(
@@ -49,15 +53,6 @@ PlayScene::~PlayScene()
 
 void PlayScene::Update()
 {
-   //if (CheckHitKey(KEY_INPUT_G)) {
-   //    SceneManager::ChangeScene("GAME OVER");
-   //    return;
-   //}
-   //else if (CheckHitKey(KEY_INPUT_C)) {
-   //    SceneManager::ChangeScene("CLEAR");
-   //    return;
-   //}
-
    // 各自Update
    camera->Update();
    player->Update();
@@ -144,12 +139,53 @@ void PlayScene::Update()
        }
    }
 
-   if (allDead)
+   if (allDead && !stageClear)
    {
-       // 次のステージへ
-       Player::NextStage();
-       SceneManager::ChangeScene("READY");
-       return;
+       stageClear = true;
+       stageClearTimer = 0;
+
+       // プレイヤーを無敵可
+       Player::SetInvincible(true);
+
+       // プレイヤー操作停止
+       Player::SetControlEnabled(false);
+
+       // プレイヤー弾削除
+       player->ClearBullets();
+
+       // 敵弾削除
+       for (auto e : enemies)
+       {
+           if (e)
+           {
+               e->ClearBullets();
+           }
+       }
+   }
+
+   // 敵全滅後の待機
+   if (stageClear)
+   {
+       stageClearTimer++;
+
+       if (stageClearTimer >= STAGE_WAIT)
+       {
+           Player::SetInvincible(false);
+           Player::SetControlEnabled(true);
+
+           // 最大ステージ判定
+           if (Player::GetStage() >= MAX_STAGE)
+           {
+               SceneManager::ChangeScene("CLEAR");
+           }
+           else
+           {
+               // 次のステージへ
+               Player::NextStage();
+               SceneManager::ChangeScene("READY");
+           }
+           return;
+       }
    }
 }
 

@@ -46,6 +46,10 @@ void Bullet::Update()
         // ƒvƒŒƒCƒ„[‚Æ‚Ì“–‚½‚è”»’è
         if(owner && owner->IsAlive())
         {
+            // –³“G’†‚ÍŒø‚©‚È‚¢
+            if (Player::IsInvincible())
+                return;
+
             VECTOR p = owner->GetPosition();
 
             if (fabs(m_pos.x - p.x) < (Config::Bullet_Half + Config::Player_Half) &&

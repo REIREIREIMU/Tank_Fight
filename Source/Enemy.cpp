@@ -150,6 +150,11 @@ void Enemy::DrawBullets()
 	}
 }
 
+void Enemy::ClearBullets()
+{
+	bullets.clear();
+}
+
 void Enemy::UpdateTurret()
 {
 	VECTOR p = player->GetPosition();

@@ -10,6 +10,12 @@ static const float Angle  = 0.020f;		// 車体の移転速度
 int Player::m_lives = 2;	// 残機の個数
 int Player::s_stage = 1;	// 最初のステージ
 
+// 無敵の有無
+bool Player::s_invincible = false;
+
+// 操作停止の有無
+bool Player::s_controlEnabled = true;
+
 Player::Player(Object* obj, std::vector<Enemy*>* enemyList) :
 	m_alive(true),
 	m_Exploding(false),
@@ -64,7 +70,11 @@ Player::~Player()
 }
 
 void Player::Update()
-{	
+{
+	// 操作停止中は移動・射撃しない
+	if (!s_controlEnabled)
+		return;
+
 	// 生存中
 	if (m_alive) {
 		// 移動量計算
@@ -170,6 +180,7 @@ void Player::Update()
 			m_Exploding = false;
 		}
 	}
+
 }
 
 
@@ -272,6 +283,11 @@ void Player::DrawBullets()
 	}
 }
 
+void Player::ClearBullets()
+{
+	bullets.clear();
+}
+
 int Player::CountAliveBullets() const
 {
 	int count = 0;
@@ -305,33 +321,46 @@ VECTOR Player::GetMouseWorldPos()
 	return hitPos;
 }
 
-int Player::GetLives()
-{
+// 残機関連
+int  Player::GetLives() {
 	return m_lives;
 }
 
-void Player::ResetLives(int v)
-{
+void Player::DecreaseLives() {
+	if (m_lives > 0) m_lives--;
+}
+
+void Player::ResetLives(int v) {
 	m_lives = v;
 }
 
-void Player::DecreaseLives()
-{
-	if (m_lives > 0)
-		m_lives--;
-}
-
-int Player::GetStage()
-{
+// ステージ関連
+int  Player::GetStage() {
 	return s_stage;
 }
 
-void Player::NextStage()
-{
+void Player::NextStage() {
 	s_stage++;
 }
 
-void Player::ResetStage()
-{
+void Player::ResetStage() {
 	s_stage = 1;
+}
+
+// 無敵制御
+void Player::SetInvincible(bool v) {
+	s_invincible = v;
+}
+
+bool Player::IsInvincible() {
+	return s_invincible;
+}
+
+// 操作停止制御
+void Player::SetControlEnabled(bool v) {
+	s_controlEnabled = v;
+}
+
+bool Player::IsControlEnabled() {
+	return s_controlEnabled;
 }

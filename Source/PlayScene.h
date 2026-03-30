@@ -33,4 +33,8 @@ private:
 	int zAxisColor = GetColor( 80, 80, 200); // Z軸：青
 
 	int timer;
+
+	// 敵全滅させた後に使う用
+	bool stageClear = false;
+	int stageClearTimer = 0;
 };

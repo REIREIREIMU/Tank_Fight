@@ -27,6 +27,9 @@ public:
 	// 弾を描画
 	void DrawBullets();
 
+	// 弾全削除
+	void ClearBullets();
+
 	// 残機関連
 	static int  GetLives();
 	static void ResetLives(int lives = 2);
@@ -37,13 +40,23 @@ public:
 	static void NextStage();
 	static void ResetStage();
 
+	// 無敵制御
+	static void SetInvincible(bool v);
+	static bool IsInvincible();
+
+	// 操作停止制御
+	static void SetControlEnabled(bool v);
+	static bool IsControlEnabled();
+
 	// 現在生きている弾数を数える関数
 	int CountAliveBullets() const;
 
 private:
-	bool m_alive;		// 生存フラグ（Player用）
-	static int m_lives; // 残機
-	static int s_stage; // ステージ
+	bool m_alive;			      // 生存フラグ（Player用）
+	static bool s_invincible;     // 無敵フラグ
+	static bool s_controlEnabled; // 操作停止フラグ
+	static int m_lives;		      // 残機
+	static int s_stage;		      // ステージ
 
 	bool  m_Exploding;          // 爆発中のフラグ
 	int   m_Explosion_Handle;   // 爆発モデルのハンドル
@@ -80,13 +93,4 @@ private:
 
 	// マウスポインター用ベクター
 	VECTOR GetMouseWorldPos();
-
-	/*enum Dir {
-		Front = 0,
-		Left,
-		Back,
-		Right,
-	};
-	Dir direction;
-	int counter;*/
 };
