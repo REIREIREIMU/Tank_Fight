@@ -26,6 +26,7 @@ static void ResolveCollision(
 
     posA = VAdd(posA, VScale(pushDir, overlap * 0.5f));
     posB = VSub(posB, VScale(pushDir, overlap * 0.5f));
+
 }
 
 PlayScene::PlayScene():timer(0)
@@ -131,6 +132,25 @@ void PlayScene::Update()
            }
        }
    }
+
+   // 敵全滅チェック
+   bool allDead = true;
+   for (auto e : enemies)
+   {
+       if (e && e->IsAlive())
+       {
+           allDead = false;
+           break;
+       }
+   }
+
+   if (allDead)
+   {
+       // 次のステージへ
+       Player::NextStage();
+       SceneManager::ChangeScene("READY");
+       return;
+   }
 }
 
 void PlayScene::Draw()
@@ -185,6 +205,11 @@ void PlayScene::Draw()
 
     // UI描画
     {
+        int aliveEnemyCount = 0;
+        for (auto e : enemies)
+            if (e && e->IsAlive())
+                aliveEnemyCount++;
+
         SetUseZBuffer3D(FALSE);
         SetWriteZBuffer3D(FALSE);
 
@@ -194,12 +219,14 @@ void PlayScene::Draw()
             VGet(0.0f, 0.0f, 0.0f)
         );
 
+        SetFontSize(40);
+        DrawFormatString(20, 20, GetColor(255, 255, 255),
+            "STAGE：%d", Player::GetStage());
+
         SetFontSize(30);
-        DrawFormatString(
-            20, 20,
-            GetColor(255, 255, 255),
-            "残機：%d",
-            player->Player::GetLives()
-        );
+        DrawFormatString(1120, 20, GetColor(255, 255, 255),
+            "残機： %d", Player::GetLives());
+        DrawFormatString(20, 60, GetColor(255, 255, 255),
+            "残り敵数 : %d", aliveEnemyCount);
     }
 }

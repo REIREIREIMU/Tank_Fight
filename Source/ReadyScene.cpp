@@ -45,6 +45,15 @@ void ReadyScene::Draw()
 
 	DrawExtendGraph(0, 0, screenW, screenH, image_, TRUE);
 
+	SetFontSize(40);
+	DrawFormatString(
+		screenW / 2 - 135,
+		screenH / 2 - 120,
+		GetColor(255, 255, 255),
+		"STAGE : %d",
+		Player::GetStage()
+	);
+
 	SetFontSize(45);
 	DrawFormatString(
 		screenW / 2 - 40,

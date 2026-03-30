@@ -32,12 +32,18 @@ public:
 	static void ResetLives(int lives = 2);
 	static void DecreaseLives();
 
+	// ステージ関連
+	static int GetStage();
+	static void NextStage();
+	static void ResetStage();
+
 	// 現在生きている弾数を数える関数
 	int CountAliveBullets() const;
 
 private:
 	bool m_alive;		// 生存フラグ（Player用）
 	static int m_lives; // 残機
+	static int s_stage; // ステージ
 
 	bool  m_Exploding;          // 爆発中のフラグ
 	int   m_Explosion_Handle;   // 爆発モデルのハンドル

@@ -15,6 +15,7 @@ public:
 
 	void Update() override;
 	void Draw() override;
+
 private:
 	Camera* camera = nullptr;		// Cameraのポインタを作成
 	Player* player = nullptr;		// Playerのポインタを作成

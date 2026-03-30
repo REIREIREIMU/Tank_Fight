@@ -8,6 +8,7 @@ static const float Speed  = 0.025f;		// 移動速度
 static const float Angle  = 0.020f;		// 車体の移転速度
 
 int Player::m_lives = 2;	// 残機の個数
+int Player::s_stage = 1;	// 最初のステージ
 
 Player::Player(Object* obj, std::vector<Enemy*>* enemyList) :
 	m_alive(true),
@@ -304,7 +305,6 @@ VECTOR Player::GetMouseWorldPos()
 	return hitPos;
 }
 
-
 int Player::GetLives()
 {
 	return m_lives;
@@ -319,4 +319,19 @@ void Player::DecreaseLives()
 {
 	if (m_lives > 0)
 		m_lives--;
+}
+
+int Player::GetStage()
+{
+	return s_stage;
+}
+
+void Player::NextStage()
+{
+	s_stage++;
+}
+
+void Player::ResetStage()
+{
+	s_stage = 1;
 }

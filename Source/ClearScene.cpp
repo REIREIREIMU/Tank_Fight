@@ -4,6 +4,7 @@
 ClearScene::ClearScene() 
 {
 	Player::ResetLives(2);
+	Player::ResetStage();
 }
 
 ClearScene::~ClearScene()
