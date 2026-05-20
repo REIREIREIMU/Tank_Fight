@@ -76,6 +76,19 @@ void Player::Update()
 	if (!s_controlEnabled)
 		return;
 
+	// 弾更新
+	for (auto& b : bullets) b->Update();
+	bullets.erase(
+		std::remove_if(
+			bullets.begin(),
+			bullets.end(),
+			[](const std::unique_ptr<Bullet>& b)
+			{
+				return !b->IsAlive();
+			}),
+		bullets.end()
+	);
+
 	// 生存中
 	if (m_alive) {
 		// 移動量計算
@@ -130,19 +143,6 @@ void Player::Update()
 			Shoot();
 		}
 		prevShot = nowShot;
-
-		// 弾更新
-		for (auto& b : bullets) b->Update();
-		bullets.erase(
-			std::remove_if(
-				bullets.begin(),
-				bullets.end(),
-				[](const std::unique_ptr<Bullet>& b)
-				{
-					return !b->IsAlive();
-				}),
-			bullets.end()
-		);
 
 		// 位置管理
 		Position = VGet(pos_x, 0.0f, pos_z);

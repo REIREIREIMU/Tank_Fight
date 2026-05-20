@@ -4,7 +4,7 @@
 #include "Config.h"
 #include <cmath>
 
-static const float Speed = 0.013f;		// 移動速度
+static const float Speed = 0.010f;		// 移動速度
 static const float Angle = 0.020f;		// 車体の移転速度
 
 // 無敵の有無
@@ -56,6 +56,21 @@ Enemy::~Enemy()
 
 void Enemy::Update()
 {
+	// 弾更新
+	for (auto& b : bullets)
+		b->Update();
+
+	bullets.erase(
+		std::remove_if(
+			bullets.begin(),
+			bullets.end(),
+			[](const std::unique_ptr<Bullet>& b)
+			{
+				return !b->IsAlive();
+			}),
+		bullets.end()
+	);
+
 	// 生存中
 	if (m_alive) {
 		switch (type)
@@ -95,21 +110,6 @@ void Enemy::Update()
 				}
 			}
 		}
-
-		// 弾更新
-		for (auto& b : bullets)
-			b->Update();
-
-		bullets.erase(
-			std::remove_if(
-				bullets.begin(),
-				bullets.end(),
-				[](const std::unique_ptr<Bullet>& b)
-				{
-					return !b->IsAlive();
-				}),
-			bullets.end()
-		);
 
 		// モデルの位置を設定する(車体)
 		MV1SetPosition(Body_m_handle, Position);		 // 位置座標
