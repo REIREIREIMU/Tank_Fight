@@ -19,7 +19,7 @@ void ReadyScene::SetLives(int l)
 void ReadyScene::Update()
 {
 	timer++;
-	if (timer >= Config::READY_WAIT)
+	if (timer >= READY_WAIT)
 		SceneManager::ChangeScene("PLAY");
 }
 

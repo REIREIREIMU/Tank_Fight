@@ -19,4 +19,6 @@ private:
 	int image_;
 	int timer;  // 画面遷移するまでの時間
 	int lives;  // 表示用残機
+
+	const int READY_WAIT = 120; // ReadySceneからPlaySceneに行くまでの時間(120 = 2秒)
 };

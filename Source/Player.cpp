@@ -12,8 +12,8 @@ bool Player::Invincible		= false;	// –³“G‚Ì—L–³
 bool Player::ControlEnabled = true;		// ‘€ì’â~‚Ì—L–³
 
 Player::Player(Object* obj, std::vector<Enemy*>* enemyList) :
-	Speed(0.025f),
-	Angle(0.020f),
+	Speed(0.015f),
+	Angle(0.010f),
 	move_x(0.0f),
 	move_z(0.0f),
 	Alive(true),

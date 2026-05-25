@@ -8,8 +8,8 @@
 bool Enemy::Invincible = false;	// –³“G‚Ì—L–³
 
 Enemy::Enemy(const VECTOR& spawnPos, EnemyType type, Object* object, Player* player) :
-	Speed(0.010f),
-	Angle(0.020f),
+	Speed(0.008f),
+	Angle(0.005f),
 	type(type),
 	player(player),
 	Alive(true),

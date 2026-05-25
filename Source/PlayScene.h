@@ -37,8 +37,10 @@ private:
 	int timer = 0;				// プレイヤー死亡後に使うタイマー
 	bool stageClear = false;	// クリア状態フラグ
 	int stageClearTimer = 0;	// クリア後ステージの待機時間
+	const int MAX_STAGE = 3;	// 最大ステージ数
 
-	static const int MAX_STAGE = 3; // 最大ステージ数
+	const int DEATH_WAIT = 120;	// プレイヤーが死んでから次の処理に行くまでの時間(120 = 2秒)
+	const int STAGE_WAIT = 120;	// 敵全滅後、次の処理に行くまでの時間(120 = 2秒)
 
 	// ==== デバック用グリット線 ====
 	/*

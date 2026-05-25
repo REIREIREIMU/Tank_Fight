@@ -140,7 +140,7 @@ void PlayScene::PlayerDeath()
         if (timer < 0) timer = 0;
         else {
             timer++;
-            if (timer >= Config::DEATH_WAIT) {
+            if (timer >= DEATH_WAIT) {
                 // 残機を1減らす
                 player->Player::DecreaseLives();
 
@@ -199,7 +199,7 @@ void PlayScene::StageClear()
     // 敵全滅後の待機
     if (stageClear) {
         stageClearTimer++;
-        if (stageClearTimer >= Config::STAGE_WAIT) {
+        if (stageClearTimer >= STAGE_WAIT) {
             Player::SetInvincible(false);    // 敵全滅後プレイヤー無敵
             Player::SetControlEnabled(true); // 敵全滅後プレイヤーの操作無効化
 
