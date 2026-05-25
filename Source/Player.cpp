@@ -4,80 +4,76 @@
 #include "Config.h"
 #include <cmath>
 
-static const float Speed  = 0.025f;		// 移動速度
-static const float Angle  = 0.020f;		// 車体の移転速度
-
-int Player::s_totalEnemyKill = 0;	// 倒した敵数
-int Player::m_lives          = 2;	// 残機の個数
-int Player::s_stage          = 1;	// 最初のステージ
-
-// 無敵の有無
-bool Player::s_invincible = false;
-
-// 操作停止の有無
-bool Player::s_controlEnabled = true;
+// ====== 静的変数 ======
+int  Player::TotalEnemyKill = 0;	// 倒した敵数
+int  Player::Lives			= 2;	// 残機の個数
+int  Player::Stage			= 1;	// 最初のステージ
+bool Player::Invincible		= false;	// 無敵の有無
+bool Player::ControlEnabled = true;		// 操作停止の有無
 
 Player::Player(Object* obj, std::vector<Enemy*>* enemyList) :
-	m_alive(true),
-	m_Exploding(false),
-	m_Explosion_Handle(-1),
-	m_Explosion_Scale(0.0f),
-	Body_m_handle(-1),
-	Head_m_handle(-1),
+	Speed(0.025f),
+	Angle(0.020f),
+	move_x(0.0f),
+	move_z(0.0f),
+	Alive(true),
+	Exploding(false),
+	Explosion_Handle(-1),
+	Explosion_Scale(0.0f),
+	Body_handle(-1),
+	Head_handle(-1),
 	pos_x(0.0f),
-	pos_y1(DX_PI_F), 
+	pos_y1(DX_PI_F),
 	pos_y2(0.0f),
-	pos_z(0.0f), 
+	pos_z(0.0f),
 	object(obj),
 	enemies(enemyList)
 {
 	VECTOR spawnPos;
-
-	if (object->GetPlayerSpawnPos(spawnPos)){
+	if (object->GetPlayerSpawnPos(spawnPos)) {
 		pos_x = spawnPos.x;
 		pos_z = spawnPos.z;
 	}
-	else{
-		pos_x = 0.0f;
-		pos_z = 0.0f;
-	}
 
 	// 3Dモデルの読み込み
-	Body_m_handle = MV1LoadModel("Assets/Player_Tank_Body.mv1");
-	Head_m_handle = MV1LoadModel("Assets/Player_Tank_Head.mv1");
-	
-	// 位置管理
-	Position      = VGet( pos_x,  0.0f, pos_z);
-	Body_Rotation = VGet( 0.0f, pos_y1,  0.0f); // 車体用回転
-	Head_Rotation = VGet( 0.0f, pos_y2,  0.0f); // 砲塔用回転
+	Body_handle = MV1LoadModel("Assets/Player_Tank_Body.mv1");
+	Head_handle = MV1LoadModel("Assets/Player_Tank_Head.mv1");
 
-	forward.x	  = sinf(pos_y1);
-	forward.z	  = cosf(pos_y1);
-
-	// モデルの位置を設定する(車体)
-	MV1SetPosition	 ( Body_m_handle, Position);	  // 位置座標
-	MV1SetRotationXYZ( Body_m_handle, Body_Rotation); // 回転座標
-
-	// モデルの位置を設定する(砲塔)
-	MV1SetPosition   ( Head_m_handle, Position);	  // 位置座標
-	MV1SetRotationXYZ( Head_m_handle, Head_Rotation); // 回転座標
+	// プレイヤーを設置
+	Rotation();
 }
 
 Player::~Player()
 {
 	// モデルの削除
-	MV1DeleteModel(Body_m_handle);
-	MV1DeleteModel(Head_m_handle);
+	MV1DeleteModel(Body_handle);
+	MV1DeleteModel(Head_handle);
 }
 
 void Player::Update()
 {
 	// 操作停止中は移動・射撃しない
-	if (!s_controlEnabled)
-		return;
+	if (!ControlEnabled) return;
 
-	// 弾更新
+	Bullets(); // 弾更新
+
+	// プレイヤー生存中に更新
+	if (Alive) {
+		Move();
+		Shooting();
+		Rotation();
+	}
+	// プレイヤー死亡で更新
+	else {
+		Explosion();
+	}
+}
+
+// 弾更新
+void Player::Bullets()
+{
 	for (auto& b : bullets) b->Update();
+
 	bullets.erase(
 		std::remove_if(
 			bullets.begin(),
@@ -88,117 +84,115 @@ void Player::Update()
 			}),
 		bullets.end()
 	);
-
-	// 生存中
-	if (m_alive) {
-		// 移動量計算
-		move_x = 0.0f, move_z = 0.0f;
-
-		// 砲塔回転
-		VECTOR mousePos = GetMouseWorldPos();
-		VECTOR dir;
-		dir.x = mousePos.x - pos_x;
-		dir.z = mousePos.z - pos_z;
-
-		// マウスポインターを追従して回転
-		pos_y2 = atan2f(dir.x, dir.z) + DX_PI_F;
-
-		// 回転操作
-		if (CheckHitKey(KEY_INPUT_A)) { // 左回転
-			pos_y1 -= Angle;
-		}
-		if (CheckHitKey(KEY_INPUT_D)) { // 右回転
-			pos_y1 += Angle;
-		}
-
-		forward.x = sinf(pos_y1);
-		forward.z = cosf(pos_y1);
-
-		// 移動操作
-		if (CheckHitKey(KEY_INPUT_W)) { // 前進
-			move_x -= forward.x * Speed;
-			move_z -= forward.z * Speed;
-		}
-		if (CheckHitKey(KEY_INPUT_S)) { // 後進
-			move_x += forward.x * Speed;
-			move_z += forward.z * Speed;
-		}
-
-		// スライド移動
-		float next_x = pos_x + move_x;
-		if (!object->CheckHit(next_x, pos_z, Config::Player_Half)) {
-			pos_x = next_x;
-		}
-		float next_z = pos_z + move_z;
-		if (!object->CheckHit(pos_x, next_z, Config::Player_Half)) {
-			pos_z = next_z;
-		}
-
-		// 弾発射
-		static bool prevShot = false;
-		bool nowShot = GetMouseInput();
-
-		if ((nowShot & MOUSE_INPUT_LEFT) && !(prevShot & MOUSE_INPUT_LEFT))
-		{
-			Shoot();
-		}
-		prevShot = nowShot;
-
-		// 位置管理
-		Position = VGet(pos_x, 0.0f, pos_z);
-		Body_Rotation = VGet(0.0f, pos_y1, 0.0f); // 車体用回転
-		Head_Rotation = VGet(0.0f, pos_y2, 0.0f); // 砲塔用回転
-
-		// モデルの位置を設定する(車体)
-		MV1SetPosition(Body_m_handle, Position);		 // 位置座標
-		MV1SetRotationXYZ(Body_m_handle, Body_Rotation); // 回転座標
-
-		// モデルの位置を設定する(砲塔)
-		MV1SetPosition(Head_m_handle, Position);		 // 位置座標
-		MV1SetRotationXYZ(Head_m_handle, Head_Rotation); // 回転座標
-	}
-
-	// 爆発中
-	if (m_Exploding)
-	{
-		m_Explosion_Scale += Config::ExplosionGrowSpeed;
-
-		// 拡大
-		MV1SetScale(
-			m_Explosion_Handle,
-			VGet(
-				m_Explosion_Scale,
-				m_Explosion_Scale,
-				m_Explosion_Scale
-			)
-		);
-
-		// 最大サイズに達したら消す
-		if (m_Explosion_Scale >= Config::ExplosionEndScale)
-		{
-			MV1DeleteModel(m_Explosion_Handle);
-			m_Explosion_Handle = -1;
-			m_Exploding = false;
-		}
-	}
-
 }
 
+// 移動処理
+void Player::Move()
+{
+	// 移動量計算
+	move_x = 0.0f, move_z = 0.0f;
+
+	// 砲塔回転
+	VECTOR mousePos = GetMouseWorldPos();
+	VECTOR dir;
+	dir.x = mousePos.x - pos_x;
+	dir.z = mousePos.z - pos_z;
+
+	// マウスポインターを追従して回転
+	pos_y2 = atan2f(dir.x, dir.z) + DX_PI_F;
+
+	// 回転操作
+	if (CheckHitKey(KEY_INPUT_A)) pos_y1 -= Angle;	// 左回転
+	if (CheckHitKey(KEY_INPUT_D)) pos_y1 += Angle;	// 右回転
+
+	// 前方向
+	forward.x = sinf(pos_y1);
+	forward.z = cosf(pos_y1);
+
+	// 移動操作
+	if (CheckHitKey(KEY_INPUT_W)) { // 前進
+		move_x -= forward.x * Speed;
+		move_z -= forward.z * Speed;
+	}
+	if (CheckHitKey(KEY_INPUT_S)) { // 後進
+		move_x += forward.x * Speed;
+		move_z += forward.z * Speed;
+	}
+
+	// スライド移動
+	float next_x = pos_x + move_x;
+	if (!object->CheckHit(next_x, pos_z, Config::Player_Half)) {
+		pos_x = next_x;
+	}
+	float next_z = pos_z + move_z;
+	if (!object->CheckHit(pos_x, next_z, Config::Player_Half)) {
+		pos_z = next_z;
+	}
+}
+
+// 回転処理
+void Player::Rotation()
+{
+	// 位置管理
+	Position = VGet(pos_x, 0.0f, pos_z);
+	Body_Rotation = VGet(0.0f, pos_y1, 0.0f); // 車体用回転
+	Head_Rotation = VGet(0.0f, pos_y2, 0.0f); // 砲塔用回転
+
+	// モデルの位置を設定する(車体)
+	MV1SetPosition(Body_handle, Position);		   // 位置座標
+	MV1SetRotationXYZ(Body_handle, Body_Rotation); // 回転座標
+
+	// モデルの位置を設定する(砲塔)
+	MV1SetPosition(Head_handle, Position);		   // 位置座標
+	MV1SetRotationXYZ(Head_handle, Head_Rotation); // 回転座標
+}
+
+// 射撃処理
+void Player::Shooting()
+{
+	// 弾発射
+	static bool prevShot = false;
+	bool nowShot = GetMouseInput();
+
+	// マウス左クリックで弾発射
+	if ((nowShot & MOUSE_INPUT_LEFT) && !(prevShot & MOUSE_INPUT_LEFT)) {
+		Shoot();
+	}
+
+	prevShot = nowShot;
+}
+
+// 爆発処理
+void Player::Explosion()
+{
+	if (!Exploding) return;
+
+	Explosion_Scale += Config::ExplosionGrowSpeed;
+
+	// モデルを拡大
+	MV1SetScale(Explosion_Handle,
+		VGet(Explosion_Scale, Explosion_Scale, Explosion_Scale));
+
+	// 最大サイズに達したら消す
+	if (Explosion_Scale >= Config::ExplosionEndScale) {
+		MV1DeleteModel(Explosion_Handle);
+		Explosion_Handle = -1;
+		Exploding = false;
+	}
+}
 
 void Player::Draw()
 {
 	// 生存時
-	if (m_alive)
-	{
-		MV1DrawModel(Body_m_handle);
-		MV1DrawModel(Head_m_handle);
+	if (Alive) {
+		MV1DrawModel(Body_handle);
+		MV1DrawModel(Head_handle);
 		return;
 	}
 
 	// 死亡時
-	if (m_Exploding && m_Explosion_Handle != -1)
-	{
-		MV1DrawModel(m_Explosion_Handle);
+	if (Exploding && Explosion_Handle != -1) {
+		MV1DrawModel(Explosion_Handle);
 	}
 
 	// 当たり判定の可視化（デバッグ用）
@@ -222,16 +216,15 @@ void Player::Draw()
 		//	FALSE
 		//);
 	}
-
 }
 
 void Player::Shoot()
 {
 	// 死亡したら何もできない
-	if (!m_alive) return;
+	if (!Alive) return;
 
 	// プレイヤーの弾が 3発ステージ上に存在している限り撃てない
-	if (CountAliveBullets() >= Max_Player_Bullets){
+	if (CountAliveBullets() >= Max_Player_Bullets) {
 		return;
 	}
 
@@ -241,10 +234,10 @@ void Player::Shoot()
 	shotDir.z = -cosf(pos_y2);
 	shotDir = VNorm(shotDir);
 
-	const float MuzzleOffset = 0.8f; // 砲身の長さ（弾の発射位置）
+	const float MuzzleOffset = Config::Player_Half * 2; // 砲身の長さ（弾の発射位置）
 	VECTOR muzzlePos = VGet(
 		pos_x + shotDir.x * MuzzleOffset,
-		0.4f,
+		Config::Player_Half,
 		pos_z + shotDir.z * MuzzleOffset
 	);
 
@@ -255,31 +248,28 @@ void Player::Shoot()
 
 void Player::IsDead()
 {
-	if (!m_alive) return;
-	m_alive = false;
+	if (!Alive) return;
+	Alive = false;
 
 	// 戦車モデルを消す
-	MV1DeleteModel(Body_m_handle);
-	MV1DeleteModel(Head_m_handle);
-	Body_m_handle = -1;
-	Head_m_handle = -1;
+	MV1DeleteModel(Body_handle);
+	MV1DeleteModel(Head_handle);
+
+	Body_handle = -1;
+	Head_handle = -1;
 
 	// 爆発モデル生成
-	m_Explosion_Handle = MV1LoadModel("Assets/Explosion.mv1");
-	m_Explosion_Scale = Config::ExplosionStartScale;
-	m_Exploding = true;
+	Explosion_Handle = MV1LoadModel("Assets/Explosion.mv1");
+	Explosion_Scale = Config::ExplosionStartScale;
+	Exploding = true;
 
 	// 位置は戦車の位置
-	MV1SetPosition(m_Explosion_Handle, Position);
-	MV1SetScale(m_Explosion_Handle,
-		VGet(m_Explosion_Scale, m_Explosion_Scale, m_Explosion_Scale)
-	);
+	MV1SetPosition(Explosion_Handle, Position);
 }
 
 void Player::DrawBullets()
 {
-	for (auto& b : bullets)
-	{
+	for (auto& b : bullets) {
 		b->Draw();
 	}
 }
@@ -295,9 +285,7 @@ int Player::CountAliveBullets() const
 	for (const auto& b : bullets)
 	{
 		if (b->IsAlive())
-		{
 			count++;
-		}
 	}
 	return count;
 }
@@ -310,7 +298,7 @@ VECTOR Player::GetMouseWorldPos()
 
 	// 画面上の2点（ニア・ファー）
 	VECTOR nearPos = ConvScreenPosToWorldPos(VGet((float)prevMouseX, (float)prevMouseY, 0.0f));
-	VECTOR farPos  = ConvScreenPosToWorldPos(VGet((float)prevMouseX, (float)prevMouseY, 1.0f));
+	VECTOR farPos = ConvScreenPosToWorldPos(VGet((float)prevMouseX, (float)prevMouseY, 1.0f));
 
 	// 地面（Y=0）との交点を求める
 	float t = -nearPos.y / (farPos.y - nearPos.y);
@@ -322,62 +310,30 @@ VECTOR Player::GetMouseWorldPos()
 	return hitPos;
 }
 
-// 敵撃破関連
-int Player::GetTotalEnemyKill()
-{
-	return s_totalEnemyKill;
-}
+// ======= 敵撃破関連 =======
+int Player::GetTotalEnemyKill() { return TotalEnemyKill; }
+void Player::AddEnemyKill(int count) { TotalEnemyKill += count; }
+void Player::ResetEnemyKill() { TotalEnemyKill = 0; }
+// =========================
 
-void Player::AddEnemyKill(int count)
-{
-	s_totalEnemyKill += count;
-}
+// ======= 残機関連 =======
+int  Player::GetLives() { return Lives; }
+void Player::DecreaseLives() { if (Lives > 0) Lives--; }
+void Player::ResetLives(int v) { Lives = v; }
+// ========================
 
-void Player::ResetEnemyKill()
-{
-	s_totalEnemyKill = 0;
-}
+// ====== ステージ関連 ======
+int  Player::GetStage() { return Stage; }
+void Player::NextStage() { Stage++; }
+void Player::ResetStage() { Stage = 1; }
+// =========================
 
-// 残機関連
-int  Player::GetLives() {
-	return m_lives;
-}
+// ======== 無敵制御 ========
+void Player::SetInvincible(bool v) { Invincible = v; }
+bool Player::IsInvincible() { return Invincible; }
+// =========================
 
-void Player::DecreaseLives() {
-	if (m_lives > 0) m_lives--;
-}
-
-void Player::ResetLives(int v) {
-	m_lives = v;
-}
-
-// ステージ関連
-int  Player::GetStage() {
-	return s_stage;
-}
-
-void Player::NextStage() {
-	s_stage++;
-}
-
-void Player::ResetStage() {
-	s_stage = 1;
-}
-
-// 無敵制御
-void Player::SetInvincible(bool v) {
-	s_invincible = v;
-}
-
-bool Player::IsInvincible() {
-	return s_invincible;
-}
-
-// 操作停止制御
-void Player::SetControlEnabled(bool v) {
-	s_controlEnabled = v;
-}
-
-bool Player::IsControlEnabled() {
-	return s_controlEnabled;
-}
+// ====== 操作停止制御 ======
+void Player::SetControlEnabled(bool v) { ControlEnabled = v; }
+bool Player::IsControlEnabled() { return ControlEnabled; }
+// =========================

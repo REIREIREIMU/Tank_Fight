@@ -4,47 +4,34 @@
 #include "Config.h"
 #include <cmath>
 
-static const float Speed = 0.010f;		// 移動速度
-static const float Angle = 0.020f;		// 車体の移転速度
-
-// 無敵の有無
-bool Enemy::s_invincible = false;
+// ====== 静的変数 ======
+bool Enemy::Invincible = false;	// 無敵の有無
 
 Enemy::Enemy(const VECTOR& spawnPos, EnemyType type, Object* object, Player* player) :
+	Speed(0.010f),
+	Angle(0.020f),
 	type(type),
 	player(player),
-	m_alive(true),
+	Alive(true),
 	Position(spawnPos),
-	m_Exploding(false),
-	m_Explosion_Handle(-1),
-	m_Explosion_Scale(0.0f),
-	Body_m_handle(-1),
-	Head_m_handle(-1),
+	Exploding(false),
+	Explosion_Handle(-1),
+	Explosion_Scale(0.0f),
+	Body_handle(-1),
+	Head_handle(-1),
 	pos_x(0.0f),
 	pos_y1(DX_PI_F),
 	pos_y2(0.0f),
 	pos_z(0.0f),
-	shootTimer(0),
+	ShootTimer(0),
 	object(object)
 {
 	// 3Dモデルの読み込み
-	Body_m_handle = MV1LoadModel("Assets/Enemy_Tank_A(Body).mv1");
-	Head_m_handle = MV1LoadModel("Assets/Enemy_Tank_A(Head).mv1");
+	Body_handle = MV1LoadModel("Assets/Enemy_Tank_A(Body).mv1");
+	Head_handle = MV1LoadModel("Assets/Enemy_Tank_A(Head).mv1");
 
-	// 位置管理
-	Body_Rotation = VGet(0.0f, pos_y1, 0.0f); // 車体用回転
-	Head_Rotation = VGet(0.0f, pos_y2, 0.0f); // 砲塔用回転
-
-	forward.x = sinf(pos_y1);
-	forward.z = cosf(pos_y1);
-
-	// モデルの位置を設定する(車体)
-	MV1SetPosition(Body_m_handle, Position);	  // 位置座標
-	MV1SetRotationXYZ(Body_m_handle, Body_Rotation); // 回転座標
-
-	// モデルの位置を設定する(砲塔)
-	MV1SetPosition(Head_m_handle, Position);	  // 位置座標
-	MV1SetRotationXYZ(Head_m_handle, Head_Rotation); // 回転座標
+	// 敵を設置
+	Rotation();
 }
 
 Enemy::~Enemy()
@@ -56,9 +43,24 @@ Enemy::~Enemy()
 
 void Enemy::Update()
 {
-	// 弾更新
-	for (auto& b : bullets)
-		b->Update();
+	Bullets(); // 弾更新
+
+	// 生存中に更新
+	if (Alive) {
+		EnemyAI();
+		Shooting();
+		Rotation();
+	}
+	// 死亡で更新
+	else {
+		Explosion();
+	}
+}
+
+// 弾更新
+void Enemy::Bullets()
+{
+	for (auto& b : bullets) b->Update();
 
 	bullets.erase(
 		std::remove_if(
@@ -70,94 +72,23 @@ void Enemy::Update()
 			}),
 		bullets.end()
 	);
-
-	// 生存中
-	if (m_alive) {
-		switch (type)
-		{
-		case EnemyType::Turret:
-			UpdateTurret();
-			break;
-		case EnemyType::Chaser:
-			UpdateChaser();
-			break;
-		}
-
-		shootTimer++;
-
-		// 弾発射
-		if (shootTimer >= ShootInterval)
-		{
-			if (type == EnemyType::Turret){
-				Shoot();
-				shootTimer = 0;
-			}
-			if (type == EnemyType::Chaser) {
-
-				VECTOR enemyPos = Position;
-				VECTOR playerPos = player->GetPosition();
-
-				bool hasWall = object->HasWallBetween(
-					enemyPos,
-					playerPos,
-					Config::Bullet_Half
-				);
-
-				if (!hasWall)
-				{
-					Shoot();
-					shootTimer = 0;
-				}
-			}
-		}
-
-		// モデルの位置を設定する(車体)
-		MV1SetPosition(Body_m_handle, Position);		 // 位置座標
-		MV1SetRotationXYZ(Body_m_handle, Body_Rotation); // 回転座標
-
-		// モデルの位置を設定する(砲塔)
-		MV1SetPosition(Head_m_handle, Position);		 // 位置座標
-		MV1SetRotationXYZ(Head_m_handle, Head_Rotation); // 回転座標
-	}
-
-	// 爆発中
-	if (m_Exploding)
-	{
-		m_Explosion_Scale += Config::ExplosionGrowSpeed;
-
-		// 拡大
-		MV1SetScale(
-			m_Explosion_Handle,
-			VGet(
-				m_Explosion_Scale,
-				m_Explosion_Scale,
-				m_Explosion_Scale
-			)
-		);
-
-		// 最大サイズに達したら消す
-		if (m_Explosion_Scale >= Config::ExplosionEndScale)
-		{
-			MV1DeleteModel(m_Explosion_Handle);
-			m_Explosion_Handle = -1;
-			m_Exploding = false;
-		}
-	}
 }
 
-void Enemy::DrawBullets()
+// 各種の敵のAI判別処理
+void Enemy::EnemyAI()
 {
-	for (auto& b : bullets)
+	switch (type)
 	{
-		b->Draw();
+	case EnemyType::Turret:
+		UpdateTurret();
+		break;
+	case EnemyType::Chaser:
+		UpdateChaser();
+		break;
 	}
 }
 
-void Enemy::ClearBullets()
-{
-	bullets.clear();
-}
-
+// 固定砲台型
 void Enemy::UpdateTurret()
 {
 	VECTOR p = player->GetPosition();
@@ -165,41 +96,50 @@ void Enemy::UpdateTurret()
 
 	// 砲塔だけを回す
 	pos_y2 = atan2f(dir.x, dir.z) + DX_PI_F;
-	
+
 	// 車体は動かない
 	Body_Rotation = VGet(0.0f, pos_y1, 0.0f); // 車体用回転
 	Head_Rotation = VGet(0.0f, pos_y2, 0.0f); // 砲塔用回転
 }
 
+// 尾行型
 void Enemy::UpdateChaser()
 {
 	VECTOR p = player->GetPosition();
 	VECTOR toPlayer = VSub(p, Position);
+
 	float dist = VSize(toPlayer);
+	VECTOR dir = VNorm(toPlayer);
 
 	// プレイヤーを見る
 	pos_y2 = atan2f(toPlayer.x, toPlayer.z) + DX_PI_F;
 
-	VECTOR dir = VNorm(toPlayer);
 	VECTOR moveDir = VGet(0, 0, 0);
 
-	const float ApproachDistance = 8.0f; // 接近距離
-	const float OrbitDistance	 = 5.0f; // 回り込み距離
-
 	// 距離が離れすぎていたら近づく
-	if (dist > ApproachDistance)
-	{
+	if (dist > ApproachDistance) {
 		moveDir = dir;
 	}
-	else if (dist > OrbitDistance)
-	{
+	else if (dist > OrbitDistance) {
 		VECTOR left = VGet(-dir.z, 0.0f, dir.x);
 		moveDir = VAdd(dir, left);
 	}
-	else
-	{
+	else {
 		VECTOR left = VGet(-dir.z, 0.0f, dir.x);
 		moveDir = VAdd(dir, left);
+	}
+
+	// 壁判定つき移動
+	float nextX = Position.x + moveDir.x * Speed;
+	float nextZ = Position.z + moveDir.z * Speed;
+
+	// X方向の壁判定
+	if (!object->CheckHit(nextX, Position.z, Config::Enemy_Half)) {
+		Position.x = nextX;
+	}
+	// Z方向の壁判定
+	if (!object->CheckHit(Position.x, nextZ, Config::Enemy_Half)) {
+		Position.z = nextZ;
 	}
 
 	// 車体の向きを移動方向に合わせる
@@ -209,39 +149,86 @@ void Enemy::UpdateChaser()
 		pos_y1 += (target - pos_y1) * 0.01f;
 	}
 
-	// 壁判定つき移動
-	float nextX = Position.x + moveDir.x * Speed;
-	float nextZ = Position.z + moveDir.z * Speed;
-
-	// X方向の壁判定
-	if (!object->CheckHit(nextX, Position.z, Config::Enemy_Half))
-	{
-		Position.x = nextX;
-	}
-	// Z方向の壁判定
-	if (!object->CheckHit(Position.x, nextZ, Config::Enemy_Half))
-	{
-		Position.z = nextZ;
-	}
-
 	Body_Rotation = VGet(pos_x, pos_y1, pos_z); // 車体用回転
 	Head_Rotation = VGet(pos_x, pos_y2, pos_z); // 砲塔用回転
+}
+
+// 回転処理
+void Enemy::Rotation()
+{
+	// モデルの位置を設定する(車体)
+	MV1SetPosition(Body_handle, Position);			// 位置座標
+	MV1SetRotationXYZ(Body_handle, Body_Rotation);	// 回転座標
+
+	// モデルの位置を設定する(砲塔)
+	MV1SetPosition(Head_handle, Position);			// 位置座標
+	MV1SetRotationXYZ(Head_handle, Head_Rotation);	// 回転座標
+}
+
+// 射撃処理
+void Enemy::Shooting()
+{
+	ShootTimer++;	// タイマー更新
+
+	// 弾発射
+	if (ShootTimer >= ShootInterval) {
+		// 固定砲台型の発射条件
+		if (type == EnemyType::Turret) {
+			Shoot();
+			ShootTimer = 0;	// 発射後タイマーリセット
+		}
+		// 尾行型の発射条件
+		if (type == EnemyType::Chaser) {
+			VECTOR enemyPos = Position;
+			VECTOR playerPos = player->GetPosition();
+
+			// プレイヤーと敵の間に壁があるかどうかの判定
+			bool hasWall = object->HasWallBetween(
+				enemyPos,
+				playerPos,
+				Config::Bullet_Half
+			);
+
+			// 壁がない時撃つ
+			if (!hasWall) {
+				Shoot();
+				ShootTimer = 0;	// 発射後タイマーリセット
+			}
+		}
+	}
+}
+
+// 爆発処理
+void Enemy::Explosion()
+{
+	if (!Exploding) return;
+
+	Explosion_Scale += Config::ExplosionGrowSpeed;
+
+	// モデルを拡大
+	MV1SetScale(Explosion_Handle,
+		VGet(Explosion_Scale, Explosion_Scale, Explosion_Scale));
+
+	// 最大サイズに達したら消す
+	if (Explosion_Scale >= Config::ExplosionEndScale) {
+		MV1DeleteModel(Explosion_Handle);
+		Explosion_Handle = -1;
+		Exploding = false;
+	}
 }
 
 void Enemy::Draw()
 {
 	// 生存時
-	if (m_alive)
-	{
-		MV1DrawModel(Body_m_handle);
-		MV1DrawModel(Head_m_handle);
+	if (Alive) {
+		MV1DrawModel(Body_handle);
+		MV1DrawModel(Head_handle);
 		return;
 	}
 
 	// 死亡時
-	if (m_Exploding && m_Explosion_Handle != -1)
-	{
-		MV1DrawModel(m_Explosion_Handle);
+	if (Exploding && Explosion_Handle != -1) {
+		MV1DrawModel(Explosion_Handle);
 	}
 
 	// 弾描画
@@ -274,12 +261,10 @@ void Enemy::Draw()
 void Enemy::Shoot()
 {
 	// 死亡したら何もできない
-	if (!m_alive) return;
+	if (!Alive) return;
 
-	// プレイヤーの弾が 3発ステージ上に存在している限り撃てない
-	if (CountAliveBullets() >= Max_Enemy_Bullets) {
-		return;
-	}
+	// 敵（個人）の弾が 3発ステージ上に存在している限り撃てない
+	if (CountAliveBullets() >= Max_Enemy_Bullets) return;
 
 	VECTOR shotDir;
 	shotDir.x = -sinf(pos_y2);
@@ -287,43 +272,53 @@ void Enemy::Shoot()
 	shotDir.z = -cosf(pos_y2);
 	shotDir = VNorm(shotDir);
 
-	const float MuzzleOffset = 0.8f; // 砲身の長さ（弾の発射位置）
+	const float MuzzleOffset = Config::Enemy_Half * 2; // 砲身の長さ（弾の発射位置）
 	VECTOR muzzlePos = VGet(
 		Position.x + shotDir.x * MuzzleOffset,
-		0.4f,
+		Config::Enemy_Half,
 		Position.z + shotDir.z * MuzzleOffset
 	);
 
 	bullets.push_back(
 		std::make_unique<Bullet>(muzzlePos, shotDir, object, player, nullptr)
 	);
+
 }
 
 void Enemy::IsDead()
 {
 	// プレイヤーが死亡したら無敵になる
-	if (s_invincible)
-		return;
+	if (Invincible) return;
 
-	if (!m_alive) return;
-	m_alive = false;
+	if (!Alive) return;
+	Alive = false;
 
 	// 戦車モデルを消す
-	MV1DeleteModel(Body_m_handle);
-	MV1DeleteModel(Head_m_handle);
-	Body_m_handle = -1;
-	Head_m_handle = -1;
+	MV1DeleteModel(Body_handle);
+	MV1DeleteModel(Head_handle);
+
+	Body_handle = -1;
+	Head_handle = -1;
 
 	// 爆発モデル生成
-	m_Explosion_Handle = MV1LoadModel("Assets/Explosion.mv1");
-	m_Explosion_Scale = Config::ExplosionStartScale;
-	m_Exploding = true;
+	Explosion_Handle = MV1LoadModel("Assets/Explosion.mv1");
+	Explosion_Scale = Config::ExplosionStartScale;
+	Exploding = true;
 
 	// 位置は戦車の位置
-	MV1SetPosition(m_Explosion_Handle, Position);
-	MV1SetScale(m_Explosion_Handle,
-		VGet(m_Explosion_Scale, m_Explosion_Scale, m_Explosion_Scale)
-	);
+	MV1SetPosition(Explosion_Handle, Position);
+}
+
+void Enemy::DrawBullets()
+{
+	for (auto& b : bullets) {
+		b->Draw();
+	}
+}
+
+void Enemy::ClearBullets()
+{
+	bullets.clear();
 }
 
 int Enemy::CountAliveBullets() const
@@ -332,18 +327,12 @@ int Enemy::CountAliveBullets() const
 	for (const auto& b : bullets)
 	{
 		if (b->IsAlive())
-		{
 			count++;
-		}
 	}
 	return count;
 }
 
-// 無敵制御
-void Enemy::SetInvincible(bool v) {
-	s_invincible = v;
-}
-
-bool  Enemy::IsInvincible() {
-	return s_invincible;
-}
+// ======== 無敵制御 ========
+void Enemy::SetInvincible(bool v) { Invincible = v; }
+bool Enemy::IsInvincible() { return Invincible; }
+// =========================

@@ -17,24 +17,37 @@ public:
 	void Draw() override;
 
 private:
+	// ========= 更新処理 =========
+	void PlayerEnemyCollision();   // プレイヤーと敵の当たり判定処理
+	void EnemyCollision();         // 敵同士の当たり判定処理
+	void PlayerDeath();            // プレイヤー死亡処理
+	void StageClear();             // ステージクリア処理
+
+	// =========== 描画 ===========
+	void Draw3D(); // 3D描画
+	void DrawUI(); // UI描画
+
+	// ======= ポインター群 =======
 	Camera* camera = nullptr;		// Cameraのポインタを作成
 	Player* player = nullptr;		// Playerのポインタを作成
 	Object* object = nullptr;		// Objectのポインタを作成
-
 	std::vector<Enemy*> enemies;	// Enemyのポインタを作成
 
-	// ディバック用グリット線
-	const int   Grid_Half =   50;	// グリット線を表示する範囲
+	// ========= 状態管理 =========
+	int timer = 0;				// プレイヤー死亡後に使うタイマー
+	bool stageClear = false;	// クリア状態フラグ
+	int stageClearTimer = 0;	// クリア後ステージの待機時間
+
+	static const int MAX_STAGE = 3; // 最大ステージ数
+
+	// ==== デバック用グリット線 ====
+	/*
+	const int   Grid_Half = 50;	// グリット線を表示する範囲
 	const float Grid_Size = 1.0f;	// グリット線のサイズ
 	// 通常グリッド線の色
-	int GridColor  = GetColor(80, 80, 80);
+	int GridColor = GetColor(80, 80, 80);
 	// 軸の色
 	int xAxisColor = GetColor(200, 80, 80);  // X軸：赤
-	int zAxisColor = GetColor( 80, 80, 200); // Z軸：青
-
-	int timer;
-
-	// 敵全滅させた後に使う用
-	bool stageClear = false;
-	int stageClearTimer = 0;
+	int zAxisColor = GetColor(80, 80, 200);  // Z軸：青
+	*/
 };

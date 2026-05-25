@@ -7,6 +7,6 @@ public:
 
 	void Update() override;
 private:
-	VECTOR m_cameraPos;		//カメラの座標
-	VECTOR m_cameraTarget;	//カメラの注視点
+	VECTOR CameraPos;		// カメラの座標
+	VECTOR CameraTarget;	// カメラの注視点
 };

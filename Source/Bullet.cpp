@@ -6,107 +6,51 @@
 #include <cmath>
 
 Bullet::Bullet
-(const VECTOR& startPos, const VECTOR& dir, Object* obj, Player* ownerPlayer, std::vector<Enemy*>* enemyList)
-    : m_pos(startPos),
-    m_alive(true),
-    m_trailGrowing(true),
+(const VECTOR& startPos, const VECTOR& dir, Object* obj, Player* ownerPlayer, std::vector<Enemy*>* enemyList) :
+    pos(startPos),
+    Alive(true),
+    TrailGrowing(true),
     object(obj), 
-    owner(ownerPlayer),
+    player(ownerPlayer),
     enemies(enemyList),
-    m_reflect(2),
-    Bullet_m_handle(-1)
+    ReflectCount(2),
+    Bullet_handle(-1)
 {
     // 3DÉÇÉfÉãÇÃì«Ç›çûÇ›
-    Bullet_m_handle = MV1LoadModel("Assets/Bullet.mv1");
+    Bullet_handle = MV1LoadModel("Assets/Bullet.mv1");
 
-    m_pos          = startPos;
-    m_vel          = VScale(VNorm(dir), 0.015f);
-    m_alive        = true;
-    m_trailGrowing = true;
+    pos          = startPos;
+    vel          = VScale(VNorm(dir), 0.015f);
+    Alive        = true;
+    TrailGrowing = true;
 
     // ç≈èâÇÃà íuÇãLò^
-    m_trail.push_back(m_pos);
+    m_trail.push_back(pos);
 
     // èâä˙à íuê›íË
-    MV1SetPosition(Bullet_m_handle, m_pos);
-
+    MV1SetPosition(Bullet_handle, pos);
 }
 
 Bullet::~Bullet()
 {
-    MV1DeleteModel(Bullet_m_handle);
+    MV1DeleteModel(Bullet_handle);
 }
 
 void Bullet::Update()
 {
-    if (m_alive) {
-        // à⁄ìÆ
-        m_pos = VAdd(m_pos, m_vel);
-
-        // ÉvÉåÉCÉÑÅ[Ç∆ÇÃìñÇΩÇËîªíË
-        if(owner && owner->IsAlive())
-        {
-            // ñ≥ìGíÜÇÕå¯Ç©Ç»Ç¢
-            if (Player::IsInvincible())
-                return;
-
-            VECTOR p = owner->GetPosition();
-
-            if (fabs(m_pos.x - p.x) < (Config::Bullet_Half + Config::Player_Half) &&
-                fabs(m_pos.z - p.z) < (Config::Bullet_Half + Config::Player_Half))
-            {
-                // ÉvÉåÉCÉÑÅ[è¡ñ≈
-                owner->IsDead();
-
-                // íeÇ‡è¡Ç∑
-                m_alive = false;
-                return;
-            }
-        }
-
-        // ìGÇ∆ÇÃìñÇΩÇËîªíË
-        if (enemies)
-        {
-            for (Enemy* e : *enemies)
-            {
-                if (!e || !e->IsAlive()) continue;
-
-                VECTOR ep = e->GetPosition();
-                if (fabs(m_pos.x - ep.x) < (Config::Bullet_Half + Config::Enemy_Half) &&
-                    fabs(m_pos.z - ep.z) < (Config::Bullet_Half + Config::Enemy_Half))
-                {
-                    e->IsDead();     // ìGéÄñS
-                    m_alive = false; // íeè¡ñ≈
-                    return;
-                }
-            }
-        }
-
-        // íeÇ™ê∂Ç´ÇƒÇ¢ÇÈä‘ÇÕãOìπê∂ê¨
-        if (m_trailGrowing) {
-            // ãOìπÇï€ë∂
-            m_trail.push_back(m_pos);
-
-            // ãOìπê¸ÇÃå„ÇÎÇ™èôÅXÇ…è¡Ç¶ÇÈ
-            if ((int)m_trail.size() > MaxTrailPoints) {
-                m_trail.erase(m_trail.begin());
-            }
-        }
-
-        // ï«Ç∆ÇÃìñÇΩÇËîªíË
-        CheckWallCollision();
-
-        // å¸Ç´åvéZ
-        float yaw = atan2f(-m_vel.x, -m_vel.z);
-        VECTOR rot = VGet(0.0f, yaw, 0.0f);
-
-        // íeÇÃà íuçXêV
-        MV1SetPosition(Bullet_m_handle, m_pos);
-        MV1SetRotationXYZ(Bullet_m_handle, rot);
+    // íeê∂ë∂íÜ
+    if (Alive) {
+        Move();                 // à⁄ìÆ
+        PlayerHit();            // ÉvÉåÉCÉÑÅ[Ç∆ÇÃìñÇΩÇËîªíË
+        EnemyHit();             // ìGÇ∆ÇÃìñÇΩÇËîªíË
+        CheckWallCollision();   // ï«Ç∆ÇÃìñÇΩÇËè’ìÀ
+        Trail();                // íeÇÃãOìπê∂ê¨
+        Transform();            // íeÇÃå¸Ç´
     }
+    // íeÇ™è¡ñ≈éû
     else{
         // ãOìπÇê∂ê¨ÇÕÇµÇ»Ç¢
-        m_trailGrowing = false;
+        TrailGrowing = false;
 
         // ãOìπê¸ÇÃå„ÇÎÇ™èôÅXÇ…è¡Ç¶ÇÈ
         if (!m_trail.empty()) {
@@ -115,12 +59,130 @@ void Bullet::Update()
     }
 }
 
+// à⁄ìÆèàóù
+void Bullet::Move()
+{
+    pos = VAdd(pos, vel);
+}
+
+// ÉvÉåÉCÉÑÅ[Ç∆ÇÃè’ìÀîªíË
+void Bullet::PlayerHit()
+{
+    if (player && player->IsAlive()){
+        // ñ≥ìGíÜÇÕå¯Ç©Ç»Ç¢
+        if (Player::IsInvincible()) return;
+
+        VECTOR p = player->GetPosition();
+
+        if (fabs(pos.x - p.x) < (Config::Bullet_Half + Config::Player_Half) &&
+            fabs(pos.z - p.z) < (Config::Bullet_Half + Config::Player_Half))
+        {
+            player->IsDead();   // ÉvÉåÉCÉÑÅ[è¡ñ≈
+            Alive = false;      // íeÇ‡è¡Ç∑
+            return;
+        }
+    }
+}
+
+// ìGÇ∆ÇÃè’ìÀîªíË
+void Bullet::EnemyHit()
+{
+    if (enemies){
+        for (Enemy* e : *enemies)
+        {
+            //if (!e || !e->IsAlive()) continue;
+
+            if (e && e->IsAlive()) {
+                VECTOR ep = e->GetPosition();
+
+                if (fabs(pos.x - ep.x) < (Config::Bullet_Half + Config::Enemy_Half) &&
+                    fabs(pos.z - ep.z) < (Config::Bullet_Half + Config::Enemy_Half))
+                {
+                    e->IsDead();     // ìGéÄñS
+                    Alive = false;   // íeè¡ñ≈
+                    return;
+                }
+            }
+        }
+    }
+}
+
+// ï«è’ìÀ
+void Bullet::CheckWallCollision()
+{
+    if (!object) return;
+
+    VECTOR nextPos = VAdd(pos, vel);
+
+    // Xï˚å¸
+    if (object->CheckHit(nextPos.x, pos.z, Config::Bullet_Half)) {
+        VECTOR normal = VGet((vel.x > 0.0f) ? -1.0f : 1.0f, 0.0f, 0.0f);
+        Reflect(normal);
+        return;
+    }
+
+    // Zï˚å¸
+    if (object->CheckHit(pos.x, nextPos.z, Config::Bullet_Half)){
+        VECTOR normal = VGet(0.0f, 0.0f, (vel.z > 0.0f) ? -1.0f : 1.0f);
+        Reflect(normal);
+        return;
+    }
+}
+
+// îΩéÀ
+void Bullet::Reflect(const VECTOR& normal)
+{
+    // îΩéÀÇ™èIÇ¶ÇΩÇÁè¡Ç¶ÇÈ
+    if (ReflectCount <= 0) {
+        Alive = false; // íeè¡ñ≈
+        return;
+    }
+
+    VECTOR n = VNorm(normal);
+    float dot = VDot(vel, n);
+
+    // îΩéÀÇÃåvéZ
+    vel = VSub(vel, VScale(n, 2.0f * dot));
+
+    // ÇﬂÇËçûÇ›ñhé~
+    pos = VAdd(pos, VScale(vel, 0.1f));
+
+    // Ç±Ç±Ç≈îΩéÀÇÃâÒêîÇå∏ÇÁÇ∑
+    ReflectCount--;
+}
+
+// íeÇÃãOìπê∂ê¨
+void Bullet::Trail()
+{
+    if (TrailGrowing) {
+        // ãOìπÇï€ë∂
+        m_trail.push_back(pos);
+
+        // ãOìπê¸ÇÃå„ÇÎÇ™èôÅXÇ…è¡Ç¶ÇÈ
+        if ((int)m_trail.size() > MaxTrailPoints) {
+            m_trail.erase(m_trail.begin());
+        }
+    }
+}
+
+// íeÇÃå¸Ç´
+void Bullet::Transform()
+{
+    // å¸Ç´åvéZ
+    float yaw = atan2f(-vel.x, -vel.z);
+    VECTOR rot = VGet(0.0f, yaw, 0.0f);
+
+    // íeÇÃà íuçXêV
+    MV1SetPosition(Bullet_handle, pos);
+    MV1SetRotationXYZ(Bullet_handle, rot);
+}
+
 void Bullet::Draw()
 {
-    if (m_alive)
+    if (Alive)
     {  
         // ÉÇÉfÉãÇÃï\é¶
-        MV1DrawModel(Bullet_m_handle);
+        MV1DrawModel(Bullet_handle);
     }
 
     // ãOìπê¸ÇÃï\é¶
@@ -137,58 +199,5 @@ void Bullet::Draw()
     {
       /*  printfDx("Bullet Draw Pos:(%.2f, %.2f, %.2f)\n",
             m_pos.x, m_pos.y, m_pos.z);*/
-
     }
-
-}
-
-void Bullet::CheckWallCollision()
-{
-    if (!object) return;
-
-    VECTOR nextPos = VAdd(m_pos, m_vel);
-
-    // Xï˚å¸
-    if (object->CheckHit(nextPos.x, m_pos.z, Config::Bullet_Half))
-    {
-        VECTOR normal = VGet(
-            (m_vel.x > 0.0f) ? -1.0f : 1.0f,
-            0.0f,
-            0.0f
-        );
-        Reflect(normal);
-        return;
-    }
-
-    // Zï˚å¸
-    if (object->CheckHit(m_pos.x, nextPos.z, Config::Bullet_Half))
-    {
-        VECTOR normal = VGet(
-            0.0f,
-            0.0f,
-            (m_vel.z > 0.0f) ? -1.0f : 1.0f
-        );
-        Reflect(normal);
-        return;
-    }
-}
-
-void Bullet::Reflect(const VECTOR& normal)
-{
-    // îΩéÀÇ™èIÇ¶ÇΩÇÁè¡Ç¶ÇÈ
-    if (m_reflect <= 0)
-    {
-        m_alive = false;
-        return;
-    }
-
-    VECTOR n = VNorm(normal);
-
-    float dot = VDot(m_vel, n);
-    m_vel = VSub(m_vel, VScale(n, 2.0f * dot));
-
-    // ÇﬂÇËçûÇ›ñhé~
-    m_pos = VAdd(m_pos, VScale(m_vel, 0.1f));
-
-    m_reflect--;
 }
