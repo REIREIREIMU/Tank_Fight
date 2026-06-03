@@ -22,8 +22,8 @@ public:
 	bool HasWallBetween(const VECTOR& from, const VECTOR& to, float radius);
 
 	// ========== スポーン  ==========
-	bool GetPlayerSpawnPos(VECTOR& outPos);	// プレイヤー初期位置取得
-	void GetEnemySpawnPos(					// 敵の初期位置取得（複数）
+	bool GetPlayerSpawnPos(VECTOR& outPos); // プレイヤー初期位置取得
+	void GetEnemySpawnPos(                  // 敵の初期位置取得（複数）
 		std::vector<Enemy*>& outEnemies, Player* player);
 
 private:

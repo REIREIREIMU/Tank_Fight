@@ -5,45 +5,59 @@
 #include "Object.h"
 #include "Config.h"
 
-// 戦車同士の衝突関係
+// =========================================
+// 円同士の衝突解決（XZ平面のみで処理）
+// posA / posB : それぞれの中心座標
+// radiusA / radiusB : 判定半径
+// =========================================
 static void ResolveCollision(
     VECTOR& posA, float radiusA,
     VECTOR& posB, float radiusB,
     Object* object)
 {
+    // 2点間の差分ベクトル
     VECTOR delta = VSub(posA, posB);
+
+    // 距離（XZ平面のみを使用）
     float dist = sqrtf(delta.x * delta.x + delta.z * delta.z);
+
+    // 衝突判定距離（半径の合計）
     float minDist = radiusA + radiusB;
 
+    // 衝突していなければ処理しない
     if (dist >= minDist) return;
 
-    // 重なり防止
+    // =========================================
+    // 完全に重なった場合の対策
+    // (距離0だと正規化できないため微小値を入れる)
+    // =========================================
     if (dist < 0.0001f) {
         delta = VGet(0.01f, 0.0f, 0.0f);
         dist = 0.01f;
     }
 
-    float overlap = minDist - dist;
-    VECTOR pushDir = VNorm(delta);
+    float overlap = minDist - dist;    // めり込み量
+    VECTOR pushDir = VNorm(delta);     // 押し出し方向（正規化）
 
+    // =========================================
+    // 両者が均等に押し出されるように半分ずつ移動
+    // =========================================
     VECTOR move = VScale(pushDir, overlap * 0.5f);
     VECTOR newA = VAdd(posA, move);
     VECTOR newB = VSub(posB, move);
 
-    // 壁判定確認用
+    // =========================================
+    // 壁との衝突チェック
+    // (移動後の位置が有効か確認)
+    // =========================================
     bool canMoveA = !object->CheckHit(newA.x, newA.z, radiusA);
     bool canMoveB = !object->CheckHit(newB.x, newB.z, radiusB);
-
-    if (canMoveA && canMoveB) {
-        posA = newA;
-        posB = newB;
-    }
-    else if (canMoveA) {
-        posA = VAdd(posA, VScale(pushDir, overlap));
-    }
-    else if (canMoveB) {
-        posB = VSub(posB, VScale(pushDir, overlap));
-    }
+    
+    // 両方動けるならそのまま適用
+    if (canMoveA && canMoveB) { posA = newA; posB = newB;}
+    // 片方だけ動ける場合はその側のみ押し出す
+    else if (canMoveA) posA = VAdd(posA, VScale(pushDir, overlap));
+    else if (canMoveB) posB = VSub(posB, VScale(pushDir, overlap));
 }
 
 PlayScene::PlayScene() :timer(0)
@@ -81,28 +95,35 @@ void PlayScene::Update()
     StageClear();
 }
 
+// =========================================
 // プレイヤーと敵の当たり判定処理
+// =========================================
 void PlayScene::PlayerEnemyCollision()
 {
     for (Enemy* e : enemies)
     {
+        // 無効又は、死亡している敵は無視
         if (!e || !e->IsAlive()) continue;
 
-        VECTOR pPos = player->GetPosition(); // プレイヤーの判定を取得
-        VECTOR ePos = e->GetPosition();      // 敵の判定を取得
+        VECTOR pPos = player->GetPosition(); // プレイヤーの現在位置を取得
+        VECTOR ePos = e->GetPosition();      // 敵の現在位置を取得
 
+        // 衝突解決処理
         ResolveCollision(
             pPos, Config::Player_Half,
             ePos, Config::Enemy_Half,
             object
         );
 
+        // 計算結果を反映
         player->SetPosition(pPos);
         e->SetPosition(ePos);
     }
 }
 
+// =========================================
 // 敵同士の当たり判定処理
+// =========================================
 void PlayScene::EnemyCollision()
 {
     for (size_t i = 0; i < enemies.size(); i++)
@@ -112,17 +133,21 @@ void PlayScene::EnemyCollision()
             Enemy* a = enemies[i];
             Enemy* b = enemies[j];
 
+            // 無効又は、死亡している敵は無視
             if (!a || !b) continue;
             if (!a->IsAlive() || !b->IsAlive()) continue;
 
-            VECTOR posA = a->GetPosition();      // 敵Aの判定を取得
-            VECTOR posB = b->GetPosition();      // 敵Bの判定を取得
-
+            VECTOR posA = a->GetPosition(); // 敵Aの現在位置を取得
+            VECTOR posB = b->GetPosition(); // 敵Bの現在位置を取得
+            
+            // 衝突解決
             ResolveCollision(
                 posA, Config::Enemy_Half,
                 posB, Config::Enemy_Half,
                 object
             );
+
+            // 結果を反映
             a->SetPosition(posA);
             b->SetPosition(posB);
         }

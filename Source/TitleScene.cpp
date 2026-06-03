@@ -12,8 +12,8 @@ TitleScene::~TitleScene() {}
 void TitleScene::Update()
 {
 	if (CheckHitKey(KEY_INPUT_SPACE)) {
-		Player::ResetLives(2);	  // プレイヤーの残機表示ををリセット
-		Player::ResetStage();	  // ステージの状態をリセット
+		Player::ResetLives(2);    // プレイヤーの残機表示ををリセット
+		Player::ResetStage();     // ステージの状態をリセット
 		Player::ResetEnemyKill(); // キル数リセット
 		SceneManager::ChangeScene("READY");
 	}
