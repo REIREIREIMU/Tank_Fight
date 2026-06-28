@@ -9,10 +9,10 @@
 class TitleScene : public SceneBase
 {
 public:
-	TitleScene();
-	~TitleScene();
-	void Update() override;
-	void Draw() override;
+    TitleScene();
+    ~TitleScene();
+    void Update() override;
+    void Draw() override;
 private:
-	int image_;
+    int image_;
 };

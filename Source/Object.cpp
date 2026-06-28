@@ -5,34 +5,34 @@
 
 // AABB判定
 bool CheckAABB(
-	float ax, float az, float aHalf,
-	float bx, float bz, float bHalf)
+    float ax, float az, float aHalf,
+    float bx, float bz, float bHalf)
 {
-	return
-		fabs(ax - bx) < (aHalf + bHalf) &&
-		fabs(az - bz) < (aHalf + bHalf);
+    return
+        fabs(ax - bx) < (aHalf + bHalf) &&
+        fabs(az - bz) < (aHalf + bHalf);
 }
 
 Object::Object(int stage) :
-	Half_Size(50), Ground_Size(1.0f),
-	pos_x(0), pos_y(0), pos_z(0)
+    Half_Size(50), Ground_Size(1.0f),
+    pos_x(0), pos_y(0), pos_z(0)
 {
-	// 3Dモデルの読み込み
-	Block_handle = MV1LoadModel("Assets/Block.mv1");
-	Ground_handle = MV1LoadModel("Assets/Ground.mv1");
+    // 3Dモデルの読み込み
+    Block_handle  = MV1LoadModel("Assets/Block.mv1");
+    Ground_handle = MV1LoadModel("Assets/Ground.mv1");
 
-	// 「CSV」読み込み（ステージごとで切り替える）
-	char filename[64];
-	sprintf_s(filename, "Assets/Stage/Stage_%02d.csv", stage);
+    // 「CSV」読み込み（ステージごとで切り替える）
+    char filename[64];
+    sprintf_s(filename, "Assets/Stage/Stage_%02d.csv", stage);
 
-	LoadCSV(filename);
+    LoadCSV(filename);
 }
 
 Object::~Object()
 {
-	// モデルの削除
-	MV1DeleteModel(Block_handle);
-	MV1DeleteModel(Ground_handle);
+    // モデルの削除
+    MV1DeleteModel(Block_handle);
+    MV1DeleteModel(Ground_handle);
 }
 
 void Object::Update()
@@ -41,181 +41,181 @@ void Object::Update()
 
 void Object::Draw()
 {
-	DrawGround();	// 地面描画
-	DrawBlocks();	// ブロック（壁）描画
+    DrawGround(); // 地面描画
+    DrawBlocks(); // ブロック（壁）描画
 }
 
 // 地面描画
 void Object::DrawGround()
 {
-	// 地面を指定範囲内一面に埋めて表示
-	for (int x = -Half_Size; x <= Half_Size; x++)
-	{
-		for (int z = -Half_Size; z <= Half_Size; z++)
-		{
-			pos_x = x * Ground_Size;
-			pos_z = z * Ground_Size;
+    // 地面を指定範囲内一面に埋めて表示
+    for (int x = -Half_Size; x <= Half_Size; x++)
+    {
+        for (int z = -Half_Size; z <= Half_Size; z++)
+        {
+            pos_x = x * Ground_Size;
+            pos_z = z * Ground_Size;
 
-			MV1SetPosition(Ground_handle, VGet(pos_x, pos_y, pos_z));
-			MV1DrawModel(Ground_handle);
-		}
-	}
+            MV1SetPosition(Ground_handle, VGet(pos_x, pos_y, pos_z));
+            MV1DrawModel(Ground_handle);
+        }
+    }
 }
 
 // 壁描画
 void Object::DrawBlocks()
 {
-	for (int x = 0; x < Map_pos.x; x++)
-	{
-		for (int z = 0; z < Map_pos.z; z++)
-		{
-			// mapData[1]は「壁」
-			if (mapData[z][x] != 1) continue;
+    for (int x = 0; x < Map_pos.x; x++)
+    {
+        for (int z = 0; z < Map_pos.z; z++)
+        {
+            // mapData[1]は「壁」
+            if (mapData[z][x] != 1) continue;
 
-			pos_x = (x + 0.5f - Map_pos.x * 0.5f) * Ground_Size;
-			pos_z = -(z + 0.5f - Map_pos.z * 0.5f) * Ground_Size;
+            pos_x = (x + 0.5f - Map_pos.x * 0.5f) * Ground_Size;
+            pos_z = -(z + 0.5f - Map_pos.z * 0.5f) * Ground_Size;
 
-			// ブロックモデルの表示
-			MV1SetPosition(Block_handle, VGet(pos_x, pos_y, pos_z));
-			MV1DrawModel(Block_handle);
+            // ブロックモデルの表示
+            MV1SetPosition(Block_handle, VGet(pos_x, pos_y, pos_z));
+            MV1DrawModel(Block_handle);
 
-			// デバッグ用 当たり判定
-			{
-				//VECTOR minPos = VGet(
-				//	pos_x - Block_Half,
-				//	0.0f,
-				//	pos_z - Block_Half
-				//);
-				//VECTOR maxPos = VGet(
-				//	pos_x + Block_Half,
-				//	1.0f,
-				//	pos_z + Block_Half
-				//);
-				//DrawCube3D(
-				//	minPos,
-				//	maxPos,
-				//	GetColor(0, 255, 0),  // 緑
-				//	GetColor(0, 255, 0),
-				//	FALSE
-				//);
-			}
-		}
-	}
+            // デバッグ用 当たり判定
+            {
+                //VECTOR minPos = VGet(
+                //	pos_x - Block_Half,
+                //	0.0f,
+                //	pos_z - Block_Half
+                //);
+                //VECTOR maxPos = VGet(
+                //	pos_x + Block_Half,
+                //	1.0f,
+                //	pos_z + Block_Half
+                //);
+                //DrawCube3D(
+                //	minPos,
+                //	maxPos,
+                //	GetColor(0, 255, 0),  // 緑
+                //	GetColor(0, 255, 0),
+                //	FALSE
+                //);
+            }
+        }
+    }
 }
 
 // 衝突判定
 bool Object::CheckHit(float px, float pz, float halfSize)
 {
-	for (int x = 0; x < Map_pos.x; x++)
-	{
-		for (int z = 0; z < Map_pos.z; z++)
-		{
-			if (mapData[z][x] != 1) continue;
+    for (int x = 0; x < Map_pos.x; x++)
+    {
+        for (int z = 0; z < Map_pos.z; z++)
+        {
+            if (mapData[z][x] != 1) continue;
 
-			float bx = (x + Config::Block_Half - Map_pos.x * Config::Block_Half) * Ground_Size;
-			float bz = -(z + Config::Block_Half - Map_pos.z * Config::Block_Half) * Ground_Size;
+            float bx =  (x + Config::Block_Half - Map_pos.x * Config::Block_Half) * Ground_Size;
+            float bz = -(z + Config::Block_Half - Map_pos.z * Config::Block_Half) * Ground_Size;
 
-			if (CheckAABB(px, pz, halfSize, bx, bz, Config::Block_Half)) {
-				return true; // 壁に当たってる
-			}
-		}
-	}
-	return false; // 壁に当たってない
+            if (CheckAABB( px, pz, halfSize, bx, bz, Config::Block_Half)) {
+                return true; // 壁に当たってる
+            }
+        }
+    }
+    return false; // 壁に当たってない
 }
 
 // プレイヤーのスポーン
 bool Object::GetPlayerSpawnPos(VECTOR& outPos)
 {
-	for (int z = 0; z < Map_pos.z; z++)
-	{
-		for (int x = 0; x < Map_pos.x; x++)
-		{
-			// プレイヤーの初期位置
-			if (mapData[z][x] == 9) {
-				float px = (x + Config::Block_Half - Map_pos.x * Config::Block_Half) * Ground_Size;
-				float pz = -(z + Config::Block_Half - Map_pos.z * Config::Block_Half) * Ground_Size;
+    for (int z = 0; z < Map_pos.z; z++)
+    {
+        for (int x = 0; x < Map_pos.x; x++)
+        {
+            // プレイヤーの初期位置
+            if (mapData[z][x] == 9) {
+                float px =  (x + Config::Block_Half - Map_pos.x * Config::Block_Half) * Ground_Size;
+                float pz = -(z + Config::Block_Half - Map_pos.z * Config::Block_Half) * Ground_Size;
 
-				outPos = VGet(px, 0.0f, pz);
-				return true;
-			}
-		}
-	}
-	return false;
+                outPos = VGet(px, 0.0f, pz);
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 // 敵のスポーン
 void Object::GetEnemySpawnPos(std::vector<Enemy*>& outEnemies, Player* player)
 {
-	for (int z = 0; z < Map_pos.z; z++)
-	{
-		for (int x = 0; x < Map_pos.x; x++)
-		{
-			int v = mapData[z][x];
+    for (int z = 0; z < Map_pos.z; z++)
+    {
+        for (int x = 0; x < Map_pos.x; x++)
+        {
+            int v = mapData[z][x];
 
-			VECTOR pos = VGet(
-				(x + Config::Block_Half - Map_pos.x * Config::Block_Half) * Ground_Size,
-				0.0f,
-				-(z + Config::Block_Half - Map_pos.z * Config::Block_Half) * Ground_Size
-			);
+            VECTOR pos = VGet(
+                (x + Config::Block_Half - Map_pos.x * Config::Block_Half) * Ground_Size,
+                0.0f,
+                -(z + Config::Block_Half - Map_pos.z * Config::Block_Half) * Ground_Size
+            );
 
-			// 位置固定タイプの敵の初期位置
-			if (v == 2) {
-				outEnemies.push_back(
-					new Enemy(pos, EnemyType::Turret, this, player)
-				);
-			}
-			// 追尾型タイプの敵の初期位置
-			else if (v == 3) {
-				outEnemies.push_back(
-					new Enemy(pos, EnemyType::Chaser, this, player)
-				);
-			}
-		}
-	}
+            // 位置固定タイプの敵の初期位置
+            if (v == 2) {
+                outEnemies.push_back(
+                    new Enemy(pos, EnemyType::Turret, this, player)
+                );
+            }
+            // 追尾型タイプの敵の初期位置
+            else if (v == 3) {
+                outEnemies.push_back(
+                    new Enemy(pos, EnemyType::Chaser, this, player)
+                );
+            }
+        }
+    }
 }
 
 // プレイヤーと敵の間に壁があるかどうかの関数
 bool Object::HasWallBetween(const VECTOR& from, const VECTOR& to, float radius)
 {
-	VECTOR dir = VSub(to, from);
-	float length = VSize(dir);
-	dir = VNorm(dir);
+    VECTOR dir = VSub(to, from);
+    float length = VSize(dir);
+    dir = VNorm(dir);
 
-	const float step = Ground_Size * 0.25f; // 判定間隔
-	int steps = static_cast<int>(length / step);
+    const float step = Ground_Size * 0.25f; // 判定間隔
+    int steps = static_cast<int>(length / step);
 
-	VECTOR pos = from;
+    VECTOR pos = from;
 
-	for (int i = 0; i < steps; i++)
-	{
-		pos = VAdd(pos, VScale(dir, step));
+    for (int i = 0; i < steps; i++)
+    {
+        pos = VAdd(pos, VScale(dir, step));
 
-		if (CheckHit(pos.x, pos.z, radius))
-			return true;	// 壁がある
-	}
-	return false;	// 壁がない
+        if (CheckHit(pos.x, pos.z, radius))
+            return true;  // 壁がある
+    }
+    return false;  // 壁がない
 }
 
 // CSV読み込み
 void Object::LoadCSV(const char* filename)
 {
-	std::ifstream file(filename);
-	std::string line;
+    std::ifstream file(filename);
+    std::string line;
 
-	mapData.clear();
+    mapData.clear();
 
-	while (std::getline(file, line))
-	{
-		std::stringstream ss(line);
-		std::string value;
-		std::vector<int> row;
+    while (std::getline(file, line))
+    {
+        std::stringstream ss(line);
+        std::string value;
+        std::vector<int> row;
 
-		while (std::getline(ss, value, ',')) {
-			row.push_back(std::stoi(value));
-		}
-		mapData.push_back(row);
-	}
+        while (std::getline(ss, value, ',')){
+            row.push_back(std::stoi(value));
+        }
+        mapData.push_back(row);
+    }
 
-	Map_pos.x = (int)mapData[0].size();
-	Map_pos.z = (int)mapData.size();
+    Map_pos.x = (int)mapData[0].size();
+    Map_pos.z = (int)mapData.size();
 }

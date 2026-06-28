@@ -71,6 +71,7 @@
     <ClCompile Include="Source\ReadyScene.cpp">
       <Filter>SceneManager\ReadyScene</Filter>
     </ClCompile>
+    <ClCompile Include="FpsControll.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Screen.h" />
@@ -154,6 +155,7 @@
     <ClInclude Include="Source\ReadyScene.h">
       <Filter>SceneManager\ReadyScene</Filter>
     </ClInclude>
+    <ClInclude Include="FpsControll.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Library">
